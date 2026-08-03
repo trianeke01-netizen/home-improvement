@@ -2,20 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        if ($user->isAdmin()) {
-            return redirect()->route('dashboard.admin');
-        } elseif ($user->isTeknisi()) {
-            return redirect()->route('dashboard.teknisi');
-        } else {
-            return redirect()->route('dashboard.pelanggan');
-        }
+        return match ($user->role_user) {
+            'pelanggan' => redirect()->route('dashboard.pelanggan'),
+            'teknisi'   => redirect()->route('dashboard.teknisi'),
+            'admin'     => redirect()->route('dashboard.admin'),
+            default     => redirect('/'),
+        };
+    }
+
+    public function pelanggan()
+    {
+        return view('dashboard.pelanggan');
+    }
+
+    public function pesanLayanan()
+    {
+        return view('dashboard.pesan-layanan');
+    }
+
+    public function riwayatOrder()
+    {
+        return view('dashboard.riwayat-order');
+    }
+
+    public function profil()
+    {
+        return view('dashboard.profil');
+    }
+
+    public function storeOrder(Request $request)
+    {
+        //
+    }
+
+    public function updateProfil(Request $request)
+    {
+        //
     }
 }

@@ -4,24 +4,20 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::middleware('guest')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-});
-
 Route::middleware('auth')->group(function () {
+
+    // Redirect umum setelah login, arahkan sesuai role
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/dashboard/pelanggan', function () {
-        return view('dashboard.pelanggan');
-    })->middleware('role:pelanggan')->name('dashboard.pelanggan');
+    Route::prefix('dashboard')->name('dashboard.')->middleware('role:pelanggan')->group(function () {
+        Route::get('/pelanggan', [DashboardController::class, 'pelanggan'])->name('pelanggan');
+        Route::get('/pesan-layanan', [DashboardController::class, 'pesanLayanan'])->name('pesan-layanan');
+        Route::get('/riwayat-order', [DashboardController::class, 'riwayatOrder'])->name('riwayat-order');
+        Route::get('/profil', [DashboardController::class, 'profil'])->name('profil');
+    });
+
+    Route::post('/order', [DashboardController::class, 'storeOrder'])->name('order.store');
+    Route::put('/profil', [DashboardController::class, 'updateProfil'])->name('profil.update');
 
     Route::get('/dashboard/teknisi', function () {
         return view('dashboard.teknisi');
