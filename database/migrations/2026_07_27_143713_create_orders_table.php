@@ -41,11 +41,12 @@ return new class extends Migration
     $table->dateTime('jadwal');
 
     $table->enum('status',[
-        'Menunggu',
-        'Diproses',
-        'Selesai',
-        'Dibatalkan'
-    ])->default('Menunggu');
+    'Menunggu',
+    'Dikonfirmasi',
+    'Diproses',
+    'Selesai',
+    'Dibatalkan'
+])->default('Menunggu');
 
     $table->decimal('total_harga',12,2);
 

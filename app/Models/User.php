@@ -50,18 +50,66 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class, 'id_teknisi', 'id_user');
     }
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class, 'id_user', 'id_user')->latest();
+    }
+
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class, 'id_user', 'id_user')->where('is_read', false)->latest();
+    }
+
     public function isAdmin(): bool
     {
-    return $this->role_user === 'admin';
+        return $this->role_user === 'admin';
     }
 
     public function isPelanggan(): bool
     {
-    return $this->role_user === 'pelanggan';
+        return $this->role_user === 'pelanggan';
     }
 
     public function isTeknisi(): bool
     {
-    return $this->role_user === 'teknisi';
+        return $this->role_user === 'teknisi';
+    }
+
+    public function getWhatsappNumberAttribute(): ?string
+    {
+        if (!$this->no_hp) {
+            return null;
+        }
+
+        $phone = preg_replace('/[^0-9]/', '', $this->no_hp);
+
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        }
+
+        return $phone;
+    }
+
+    public function getWhatsappLinkWithMessage(string $message = ''): string
+    {
+        $waNum = $this->whatsapp_number;
+        if (!$waNum) {
+            return '#';
+        }
+
+        return 'https://wa.me/' . $waNum . ($message ? '?text=' . urlencode($message) : '');
+    }
+
+    public function getAverageRatingAttribute(): float
+    {
+        if (!$this->isTeknisi()) {
+            return 0.0;
+        }
+
+        $avg = Review::whereHas('order', function ($query) {
+            $query->where('id_teknisi', $this->id_user);
+        })->avg('rating');
+
+        return round((float) ($avg ?? 0.0), 1);
     }
 }

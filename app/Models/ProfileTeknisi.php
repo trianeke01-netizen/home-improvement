@@ -23,20 +23,43 @@ class ProfileTeknisi extends Model
         'foto_diri',
         'portofolio',
         'status_verifikasi',
+        'status_ketersediaan',
+        'pengalaman',
     ];
 
+    /**
+     * Profile teknisi dimiliki oleh satu user.
+     */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
+        return $this->belongsTo(
+            User::class,
+            'id_user',
+            'id_user'
+        );
     }
 
+    /**
+     * Profile teknisi memiliki satu kategori.
+     */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class, 'id_kategori', 'id_kategori');
+        return $this->belongsTo(
+            Category::class,
+            'id_kategori',
+            'id_kategori'
+        );
     }
 
+    /**
+     * Profile teknisi memiliki satu subkategori keahlian.
+     */
     public function subCategory(): BelongsTo
     {
-        return $this->belongsTo(SubCategory::class, 'id_sub_kategori', 'id_sub_kategori');
+        return $this->belongsTo(
+            SubCategory::class,
+            'id_sub_kategori',
+            'id_sub_kategori'
+        );
     }
 }

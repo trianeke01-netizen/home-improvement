@@ -1,97 +1,516 @@
 @extends('layouts.dashboard')
+
 @section('title', 'Dashboard')
 
 @section('content')
 
-    <!-- STAT CARDS -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
-        <div class="border border-gray-200 rounded-2xl p-5">
-            <div class="text-sm text-gray-500 mb-2">Total Order</div>
-            <div class="text-3xl font-bold text-gray-900">{{ $totalOrder ?? 0 }}</div>
+    {{-- ========================= --}}
+    {{-- STATISTIK --}}
+    {{-- ========================= --}}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        {{-- TOTAL ORDER --}}
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+
+            <div class="flex justify-between items-center">
+
+                <div>
+
+                    <p class="text-slate-500 text-sm">
+                        Total Order
+                    </p>
+
+                    <h2 class="text-4xl font-bold text-slate-800 mt-2">
+
+                        {{ $totalOrder }}
+
+                    </h2>
+
+                </div>
+
+                <div
+                    class="w-14 h-14 rounded-xl
+                           bg-sky-100
+                           flex items-center justify-center">
+
+                    <svg class="w-8 h-8 text-sky-600"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         viewBox="0 0 24 24">
+
+                        <rect
+                            x="4"
+                            y="5"
+                            width="16"
+                            height="15"
+                            rx="2"/>
+
+                        <path
+                            d="M9 3v4M15 3v4M4 10h16"/>
+
+                    </svg>
+
+                </div>
+
+            </div>
+
         </div>
-        <div class="bg-gray-900 rounded-2xl p-5">
-            <div class="text-sm text-gray-400 mb-2">Sedang Berjalan</div>
-            <div class="text-3xl font-bold text-white">{{ $sedangBerjalan ?? 0 }}</div>
+
+
+        {{-- ORDER BERJALAN --}}
+
+        <div
+            class="rounded-2xl
+                   p-5
+                   bg-gradient-to-r
+                   from-sky-500
+                   to-blue-600
+                   text-white
+                   shadow-lg">
+
+            <div class="flex justify-between items-center">
+
+                <div>
+
+                    <p class="text-sky-100 text-sm">
+                        Sedang Berjalan
+                    </p>
+
+                    <h2 class="text-4xl font-bold mt-2">
+
+                        {{ $sedangBerjalan }}
+
+                    </h2>
+
+                </div>
+
+                <div
+                    class="w-14 h-14
+                           rounded-xl
+                           bg-white/20
+                           flex items-center justify-center">
+
+                    <svg class="w-7 h-7"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         viewBox="0 0 24 24">
+
+                        <path
+                            d="M12 8v4l3 3"/>
+
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="9"/>
+
+                    </svg>
+
+                </div>
+
+            </div>
+
         </div>
-        <div class="border border-gray-200 rounded-2xl p-5">
-            <div class="text-sm text-gray-500 mb-2">Selesai</div>
-            <div class="text-3xl font-bold text-gray-900">{{ $selesai ?? 0 }}</div>
+
+
+        {{-- SELESAI --}}
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+
+            <div class="flex justify-between items-center">
+
+                <div>
+
+                    <p class="text-slate-500 text-sm">
+
+                        Selesai
+
+                    </p>
+
+                    <h2 class="text-4xl font-bold text-green-600 mt-2">
+
+                        {{ $selesai }}
+
+                    </h2>
+
+                </div>
+
+                <div
+                    class="w-14 h-14
+                           rounded-xl
+                           bg-green-100
+                           flex items-center justify-center">
+
+                    <svg class="w-8 h-8 text-green-600"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         viewBox="0 0 24 24">
+
+                        <path
+                            d="M5 13l4 4L19 7"/>
+
+                    </svg>
+
+                </div>
+
+            </div>
+
         </div>
+
     </div>
 
-    <!-- ORDER AKTIF -->
-    <div class="mb-8">
-        <h2 class="text-base font-bold text-gray-900 mb-3">Order Aktif</h2>
+    <div class="mt-8">
+        <div class="flex items-center justify-between mb-5">
 
-        @forelse ($orderAktif ?? [] as $order)
-            <div class="border border-gray-200 rounded-2xl p-5 mb-3">
-                <div class="flex items-start justify-between mb-4">
+            <h2 class="text-2xl font-bold text-slate-800">
+                Order Aktif
+            </h2>
+
+        </div>
+
+        @forelse($orderAktif as $order)
+
+            @php
+
+                $steps = [
+                    'Menunggu' => 1,
+                    'Dikonfirmasi' => 2,
+                    'Diproses' => 3,
+                    'Selesai' => 4,
+                ];
+
+                $current = $steps[$order->status] ?? 1;
+
+            @endphp
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+
+                {{-- HEADER CARD --}}
+
+                <div class="bg-sky-50 px-7 py-6 flex justify-between items-start">
+
                     <div>
-                        <div class="font-bold text-gray-900">{{ $order->nama_layanan }}</div>
-                        <div class="text-sm text-gray-500">Teknisi: {{ $order->nama_teknisi }}</div>
+
+                        <h3 class="text-3xl font-bold text-slate-800">
+
+                            {{ $order->subCategory->category->nama_kategori }}
+
+                        </h3>
+
+                        <p class="text-slate-500 text-xl mt-1">
+
+                            {{ $order->subCategory->nama_sub_kategori }}
+
+                        </p>
+
                     </div>
-                    <span class="text-xs font-medium border border-gray-300 rounded-full px-3 py-1.5 whitespace-nowrap">
-                        {{ $order->status_label }}
+
+                    <span
+                        class="px-5 py-2 rounded-full
+                               text-sm font-semibold
+
+                            @if($order->status=='Menunggu')
+                                bg-yellow-100 text-yellow-700
+                            @elseif($order->status=='Dikonfirmasi')
+                                bg-blue-100 text-blue-700
+                            @elseif($order->status=='Diproses')
+                                bg-sky-100 text-sky-700
+                            @else
+                                bg-green-100 text-green-700
+                            @endif">
+
+                        {{ $order->status }}
+
                     </span>
+
                 </div>
 
-                @php
-                    $steps = ['Dipesan', 'Dikonfirmasi', 'Pembayaran', 'Dikerjakan', 'Selesai'];
-                    $currentIndex = array_search($order->status_label, $steps);
-                    $currentIndex = $currentIndex === false ? 0 : $currentIndex;
-                @endphp
+                {{-- BODY --}}
 
-                <div class="flex items-center gap-1 mb-2">
-                    @foreach ($steps as $i => $step)
-                        <div class="flex-1 h-1.5 rounded-full {{ $i <= $currentIndex ? 'bg-gray-900' : 'bg-gray-200' }}"></div>
-                    @endforeach
-                </div>
-                <div class="flex items-center justify-between text-xs text-gray-500">
-                    @foreach ($steps as $i => $step)
-                        <span class="{{ $i === $currentIndex ? 'font-bold text-gray-900' : '' }}">{{ $step }}</span>
-                    @endforeach
-                </div>
-            </div>
-        @empty
-            <div class="border border-dashed border-gray-200 rounded-2xl p-6 text-center text-sm text-gray-400">
-                Belum ada order yang sedang berjalan.
-            </div>
-        @endforelse
-    </div>
+                <div class="p-7">
 
-    <!-- RIWAYAT ORDER (RINGKAS) -->
-    <div>
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base font-bold text-gray-900">Riwayat Order</h2>
-            <a href="{{ route('dashboard.riwayat-order') }}" class="text-sm font-medium underline text-gray-900">Lihat semua</a>
-        </div>
+                    <div class="grid md:grid-cols-3 gap-8">
 
-        <div class="flex flex-col gap-3 mb-6">
-            @forelse ($riwayatOrder ?? [] as $item)
-                <div class="border border-gray-200 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                        <div class="font-semibold text-gray-900">{{ $item->nama_layanan }}</div>
-                        <div class="text-sm text-gray-500">{{ $item->tanggal }} · {{ $item->nama_teknisi }}</div>
-                    </div>
-                    <div class="text-right">
-                        <span class="inline-block text-xs font-medium border border-gray-300 rounded-full px-3 py-1.5 mb-1">
-                            {{ $item->status_label }}
-                        </span>
-                        <div class="text-sm font-semibold text-gray-900">
-                            Rp {{ number_format($item->harga, 0, ',', '.') }}
+                        <div>
+
+                            <p class="text-slate-400 text-sm">
+
+                                Jadwal
+
+                            </p>
+
+                            <h4 class="font-bold text-lg text-slate-800 mt-1">
+
+                                {{ \Carbon\Carbon::parse($order->jadwal)->translatedFormat('d F Y') }}
+
+                            </h4>
+
+                            <p class="text-slate-500">
+
+                                {{ \Carbon\Carbon::parse($order->jadwal)->format('H:i') }}
+
+                            </p>
+
                         </div>
+
+                        <div>
+
+                            <p class="text-slate-400 text-sm">
+
+                                Total Biaya
+
+                            </p>
+
+                            <h4 class="font-bold text-3xl text-sky-600 mt-1">
+
+                                Rp {{ number_format($order->total_harga,0,',','.') }}
+
+                            </h4>
+
+                        </div>
+
+                        <div>
+
+                            <p class="text-slate-400 text-sm">
+
+                                Teknisi Terhubung
+
+                            </p>
+
+                            <h4 class="font-bold text-lg mt-1">
+
+                                {{ $order->teknisi->nama ?? 'Belum ada teknisi' }}
+
+                            </h4>
+
+                            @if($order->teknisi)
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    <a
+                                        href="{{ $order->teknisi->getWhatsappLinkWithMessage('Halo ' . $order->teknisi->nama . ', saya pelanggan order #' . $order->id_order . ' (' . $order->subCategory->nama_sub_kategori . ') di Home Improvement.') }}"
+                                        target="_blank"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition border border-emerald-200"
+                                    >
+                                        💬 WhatsApp
+                                    </a>
+
+                                    <a
+                                        href="tel:{{ $order->teknisi->no_hp }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold transition"
+                                    >
+                                        📞 Telepon
+                                    </a>
+                                </div>
+                            @endif
+
+                        </div>
+
                     </div>
+
+                    {{-- PROGRESS --}}
+
+                    <div class="mt-8">
+
+                        <div class="flex justify-between text-sm font-medium text-slate-500 mb-3">
+
+                            <span>Dipesan</span>
+
+                            <span>Dikonfirmasi</span>
+
+                            <span>Dikerjakan</span>
+
+                            <span>Selesai</span>
+
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-3">
+
+                            <div class="h-2 rounded-full {{ $current>=1 ? 'bg-sky-500' : 'bg-slate-200' }}"></div>
+
+                            <div class="h-2 rounded-full {{ $current>=2 ? 'bg-sky-500' : 'bg-slate-200' }}"></div>
+
+                            <div class="h-2 rounded-full {{ $current>=3 ? 'bg-sky-500' : 'bg-slate-200' }}"></div>
+
+                            <div class="h-2 rounded-full {{ $current>=4 ? 'bg-sky-500' : 'bg-slate-200' }}"></div>
+
+                        </div>
+
+                    </div>
+
                 </div>
-            @empty
-                <div class="border border-dashed border-gray-200 rounded-2xl p-6 text-center text-sm text-gray-400">
-                    Belum ada riwayat order.
+
+            </div>
+
+        @empty
+
+            <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+
+                <div class="text-5xl mb-3">
+                    📦
                 </div>
-            @endforelse
+
+                <h3 class="text-xl font-bold text-slate-700">
+
+                    Belum Ada Order Aktif
+
+                </h3>
+
+                <p class="text-slate-500 mt-2">
+
+                    Silakan lakukan pemesanan layanan terlebih dahulu.
+
+                </p>
+
+            </div>
+
+        @endforelse
+
+    </div>
+
+    <div class="mt-8">
+        <div class="flex items-center justify-between mb-5">
+
+            <h2 class="text-2xl font-bold text-slate-800">
+                Riwayat Order
+            </h2>
         </div>
 
-        <a href="{{ route('dashboard.pesan-layanan') }}" class="block w-full text-center bg-gray-900 text-white font-semibold rounded-xl py-3 hover:bg-gray-800 transition">
-            + Pesan Layanan Baru
-        </a>
+        <div class="space-y-5">
+
+            @forelse($riwayatOrder as $order)
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+
+                    {{-- HEADER CARD: KATEGORI & STATUS --}}
+                    <div class="bg-gradient-to-r from-sky-50 to-blue-50 px-5 sm:px-6 py-5 flex items-start justify-between gap-4">
+
+                        <div>
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-800">
+                                {{ $order->subCategory->category->nama_kategori ?? 'Layanan' }}
+                            </h3>
+
+                            <p class="text-sm text-slate-500 mt-1">
+                                {{ $order->subCategory->nama_sub_kategori ?? '-' }}
+                            </p>
+                        </div>
+
+                        <span
+                            class="px-4 py-2 rounded-full text-xs font-semibold shrink-0
+                            @if($order->status=='Menunggu')
+                                bg-amber-100 text-amber-700
+                            @elseif($order->status=='Dikonfirmasi')
+                                bg-blue-100 text-blue-700
+                            @elseif($order->status=='Diproses' || $order->status=='Dikerjakan')
+                                bg-sky-100 text-sky-700
+                            @elseif($order->status=='Selesai')
+                                bg-emerald-100 text-emerald-700
+                            @else
+                                bg-red-100 text-red-700
+                            @endif">
+                            {{ $order->status }}
+                        </span>
+
+                    </div>
+
+                    {{-- BODY CARD: JADWAL, TOTAL BIAYA, TEKNISI --}}
+                    <div class="p-5 sm:p-6">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Jadwal</p>
+                                <p class="font-semibold text-slate-800 mt-1">
+                                    {{ \Carbon\Carbon::parse($order->jadwal)->translatedFormat('d F Y') }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ \Carbon\Carbon::parse($order->jadwal)->format('H:i') }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Total Biaya</p>
+                                <p class="font-bold text-sky-600 text-xl mt-1">
+                                    Rp {{ number_format($order->total_harga, 0, ',', '.') }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">Teknisi</p>
+                                <p class="font-semibold text-slate-800 mt-1">
+                                    {{ $order->teknisi->nama ?? 'Belum ada teknisi' }}
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {{-- FOOTER CARD: TOMBOL LIHAT DETAIL --}}
+                        <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end">
+                            <a
+                                href="{{ route('dashboard.detail-order', $order->id_order) }}"
+                                class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition shadow-sm"
+                            >
+                                Lihat Detail &rsaquo;
+                            </a>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            @empty
+
+                <div class="bg-white rounded-3xl border border-dashed border-slate-300 p-10 text-center">
+
+                    <div class="text-5xl mb-3">
+                        📋
+                    </div>
+
+                    <h3 class="text-xl font-bold text-slate-700">
+
+                        Belum Ada Riwayat Order
+
+                    </h3>
+
+                    <p class="text-slate-500 mt-2">
+
+                        Riwayat pesanan Anda akan muncul di sini.
+
+                    </p>
+
+                </div>
+
+            @endforelse
+
+        </div>
+
     </div>
+
+
+    {{-- ===================================================== --}}
+    {{-- BUTTON --}}
+    {{-- ===================================================== --}}
+
+    <div class="flex justify-end mt-8">
+
+        <a href="{{ route('dashboard.pesan-layanan') }}"
+           class="px-8 py-3 rounded-xl
+                  bg-gradient-to-r
+                  from-sky-500
+                  to-blue-600
+                  hover:from-sky-600
+                  hover:to-blue-700
+                  text-white
+                  font-semibold
+                  shadow-md
+                  transition">
+
+            Pesan Layanan Baru
+        </a>
+
+    </div>
+
+</div>
 
 @endsection
