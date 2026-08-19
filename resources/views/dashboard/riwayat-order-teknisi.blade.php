@@ -400,6 +400,14 @@
 
                         @endif
 
+                        @if($order->foto_bukti)
+                            <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
+                                <span class="text-xs font-semibold text-emerald-700">📸 Bukti Foto Perbaikan:</span>
+                                <a href="{{ asset('storage/' . $order->foto_bukti) }}" target="_blank">
+                                    <img src="{{ asset('storage/' . $order->foto_bukti) }}" alt="Bukti Foto" class="w-14 h-14 object-cover rounded-xl border-2 border-emerald-500 hover:opacity-80 transition">
+                                </a>
+                            </div>
+                        @endif
 
                         {{-- ================================================= --}}
                         {{-- BUTTON DETAIL --}}

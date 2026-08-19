@@ -406,6 +406,9 @@ class OrderController extends Controller
 
             'status' =>
                 'Dikonfirmasi',
+
+            'waktu_diterima' =>
+                now(),
         ]);
 
         if ($order->id_pelanggan) {
@@ -421,7 +424,7 @@ class OrderController extends Controller
 
         return back()->with(
             'success',
-            'Pesanan berhasil diterima dan dikonfirmasi.'
+            'Pesanan berhasil diterima dan dikonfirmasi. Harap tiba di lokasi pelanggan dalam batas waktu 1 jam.'
         );
     }
 
@@ -546,13 +549,6 @@ class OrderController extends Controller
         |--------------------------------------------------------------------------
         | Cari order milik teknisi
         |--------------------------------------------------------------------------
-        |
-        | Syarat:
-        |
-        | 1. ID order sesuai
-        | 2. id_teknisi adalah teknisi yang sedang login
-        | 3. Status = Dikonfirmasi
-        |
         */
 
         $order = Order::where(
@@ -563,11 +559,44 @@ class OrderController extends Controller
                 'id_teknisi',
                 $user->id_user
             )
-            ->where(
-                'status',
-                'Dikonfirmasi'
-            )
-            ->firstOrFail();
+            ->first();
+
+        if (!$order) {
+            return back()->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        if ($order->status === 'Dikerjakan') {
+            return back()->with('success', 'Pesanan sudah dalam status dikerjakan.');
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cek Batas Waktu 1 Jam Setelah Terima Order
+        |--------------------------------------------------------------------------
+        */
+
+        if ($order->waktu_diterima && \Carbon\Carbon::parse($order->waktu_diterima)->addMinutes(60)->isPast()) {
+
+            $order->update([
+                'status' => 'Dibatalkan',
+            ]);
+
+            if ($order->id_pelanggan) {
+                AppNotification::send(
+                    $order->id_pelanggan,
+                    'Pesanan Dibatalkan',
+                    "Pesanan #{$order->id_order} dibatalkan otomatis karena teknisi tidak mulai pengerjaan dalam 1 jam.",
+                    'order_dibatalkan',
+                    route('dashboard.detail-order', $order->id_order)
+                );
+            }
+
+            return back()->with(
+                'error',
+                'Batas waktu 1 jam untuk tiba di lokasi/mulai pengerjaan telah habis. Pesanan dibatalkan otomatis.'
+            );
+        }
 
 
         /*
@@ -584,7 +613,7 @@ class OrderController extends Controller
             AppNotification::send(
                 $order->id_pelanggan,
                 'Pengerjaan Dimulai',
-                "Teknisi {$user->nama} telah mulai mengerjakan Pesanan #{$order->id_order}.",
+                "Teknisi {$user->nama} telah tiba di lokasi dan mulai mengerjakan Pesanan #{$order->id_order}.",
                 'order_dikerjakan',
                 route('dashboard.detail-order', $order->id_order)
             );
@@ -600,17 +629,9 @@ class OrderController extends Controller
 
     /**
      * Teknisi menyelesaikan pesanan.
-     *
-     * Status:
-     *
-     * Dikerjakan
-     *      ↓
-     * Selesai
-     *
-     * Hanya teknisi yang menerima order
-     * tersebut yang dapat menyelesaikannya.
+     * Wajib melampirkan foto bukti perbaikan.
      */
-    public function selesai($id)
+    public function selesai(Request $request, $id)
     {
         $user = Auth::user();
 
@@ -628,15 +649,28 @@ class OrderController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Validasi Foto Bukti Perbaikan (Wajib)
+        |--------------------------------------------------------------------------
+        */
+
+        $request->validate([
+            'foto_bukti' => [
+                'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5048',
+            ],
+        ], [
+            'foto_bukti.required' => 'Anda wajib melampirkan foto bukti perbaikan sebelum dapat menyelesaikan pesanan.',
+            'foto_bukti.image' => 'File bukti perbaikan harus berupa gambar (JPG, JPEG, PNG, WebP).',
+            'foto_bukti.max' => 'Ukuran foto bukti perbaikan maksimal 5MB.',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
         | Cari order milik teknisi
         |--------------------------------------------------------------------------
-        |
-        | Syarat:
-        |
-        | 1. ID order sesuai
-        | 2. id_teknisi sesuai user login
-        | 3. Status harus Dikerjakan
-        |
         */
 
         $order = Order::where(
@@ -647,28 +681,35 @@ class OrderController extends Controller
                 'id_teknisi',
                 $user->id_user
             )
-            ->where(
-                'status',
-                'Dikerjakan'
-            )
-            ->firstOrFail();
+            ->first();
+
+        if (!$order) {
+            return back()->with('error', 'Pesanan tidak ditemukan atau Anda tidak memiliki akses ke pesanan ini.');
+        }
+
+        if (in_array($order->status, ['Selesai', 'Dibatalkan', 'Ditolak'])) {
+            return back()->with('error', 'Pesanan ini sudah selesai atau telah dibatalkan.');
+        }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Ubah status menjadi Selesai
+        | Upload Foto Bukti & Ubah status menjadi Selesai
         |--------------------------------------------------------------------------
         */
 
+        $fotoBukti = $request->file('foto_bukti')->store('foto-bukti', 'public');
+
         $order->update([
             'status' => 'Selesai',
+            'foto_bukti' => $fotoBukti,
         ]);
 
         if ($order->id_pelanggan) {
             AppNotification::send(
                 $order->id_pelanggan,
                 'Pesanan Selesai',
-                "Pesanan #{$order->id_order} telah selesai dikerjakan. Silakan berikan ulasan dan rating.",
+                "Pesanan #{$order->id_order} telah selesai dikerjakan dengan bukti foto terlampir. Silakan berikan ulasan dan rating.",
                 'order_selesai',
                 route('dashboard.detail-order', $order->id_order)
             );
@@ -677,7 +718,7 @@ class OrderController extends Controller
 
         return back()->with(
             'success',
-            'Pesanan berhasil diselesaikan.'
+            'Pesanan berhasil diselesaikan dengan bukti foto perbaikan terlampir.'
         );
     }
 }

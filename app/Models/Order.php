@@ -18,11 +18,17 @@ class Order extends Model
         'harga_per_unit',
         'deskripsi_kerusakan',
         'foto_kerusakan',
+        'foto_bukti',
         'alamat',
         'jadwal',
         'status',
+        'waktu_diterima',
         'total_harga',
         'metode_pembayaran',
+    ];
+
+    protected $casts = [
+        'waktu_diterima' => 'datetime',
     ];
 
     public function pelanggan(): BelongsTo

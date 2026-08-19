@@ -500,7 +500,7 @@
                     </p>
                 </div>
 
-                {{-- METODE PEMBAYARAN & FOTO KERUSAKAN --}}
+                {{-- METODE PEMBAYARAN --}}
                 <div>
                     <p class="text-xs text-slate-400 font-medium">Metode Pembayaran</p>
                     <div class="mt-1">
@@ -516,22 +516,43 @@
                             <span class="text-xs text-slate-500">Belum dipilih</span>
                         @endif
                     </div>
-
-                    @if($order->foto_kerusakan)
-                        <div class="mt-4">
-                            <p class="text-xs text-slate-400 font-medium mb-1">Foto Kerusakan</p>
-                            <a href="{{ asset('storage/' . $order->foto_kerusakan) }}" target="_blank">
-                                <img
-                                    src="{{ asset('storage/' . $order->foto_kerusakan) }}"
-                                    alt="Foto Kerusakan"
-                                    class="w-24 h-20 object-cover rounded-xl border border-slate-200 hover:opacity-80 transition shadow-sm"
-                                >
-                            </a>
-                        </div>
-                    @endif
                 </div>
 
             </div>
+
+            {{-- DOKUMENTASI FOTO KERUSAKAN & BUKTI HASIL PERBAIKAN (SEBARIS / SIDE-BY-SIDE) --}}
+            @if($order->foto_kerusakan || $order->foto_bukti)
+                <div class="mt-6 pt-5 border-t border-slate-100">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dokumentasi Pesanan</p>
+                    <div class="flex flex-wrap items-center gap-6">
+                        @if($order->foto_kerusakan)
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-xs text-slate-500 font-semibold">📷 Foto Kerusakan</span>
+                                <a href="{{ asset('storage/' . $order->foto_kerusakan) }}" target="_blank" class="block group">
+                                    <img
+                                        src="{{ asset('storage/' . $order->foto_kerusakan) }}"
+                                        alt="Foto Kerusakan"
+                                        class="w-32 h-24 object-cover rounded-2xl border border-slate-200 shadow-xs group-hover:opacity-90 transition duration-200"
+                                    >
+                                </a>
+                            </div>
+                        @endif
+
+                        @if($order->foto_bukti)
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-xs text-emerald-700 font-bold">📸 Bukti Hasil Perbaikan</span>
+                                <a href="{{ asset('storage/' . $order->foto_bukti) }}" target="_blank" class="block group">
+                                    <img
+                                        src="{{ asset('storage/' . $order->foto_bukti) }}"
+                                        alt="Bukti Hasil Perbaikan"
+                                        class="w-32 h-24 object-cover rounded-2xl border-2 border-emerald-500 shadow-xs group-hover:opacity-90 transition duration-200"
+                                    >
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
         </div>
 

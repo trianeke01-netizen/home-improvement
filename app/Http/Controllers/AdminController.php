@@ -19,148 +19,101 @@ class AdminController extends Controller
      * DASHBOARD UTAMA ADMIN
      * =========================================================
      */
-    public function index()
+    public function index(Request $request)
     {
         /*
         |--------------------------------------------------------------------------
-        | Statistik Order
+        | STATISTIK UTAMA ADMIN
         |--------------------------------------------------------------------------
         */
+        $totalPelanggan = User::where('role_user', 'pelanggan')->count();
+        $totalTeknisi = User::where('role_user', 'teknisi')->count();
+        $jumlahPengguna = User::count();
+        $jumlahTeknisi = $totalTeknisi;
+
+        $jumlahMenunggu = ProfileTeknisi::where('status_verifikasi', 'Menunggu')->count();
+        $teknisiVerifikasiPending = $jumlahMenunggu;
+        $teknisiAktif = ProfileTeknisi::where('status_verifikasi', 'Disetujui')->count();
 
         $totalOrder = Order::count();
+        $orderMenunggu = Order::where('status', 'Menunggu')->count();
+        $orderDikonfirmasi = Order::where('status', 'Dikonfirmasi')->count();
+        $orderDikerjakan = Order::whereIn('status', ['Dikerjakan', 'Diproses'])->count();
+        $orderSelesai = Order::where('status', 'Selesai')->count();
+        $orderDibatalkan = Order::where('status', 'Dibatalkan')->count();
+        $orderDitolak = Order::where('status', 'Ditolak')->count();
 
-        $orderMenunggu = Order::where(
-            'status',
-            'Menunggu'
-        )->count();
+        $totalPesanan = $totalOrder;
+        $pesananSelesai = $orderSelesai;
+        $sedangDikerjakan = $orderDikerjakan + $orderDikonfirmasi;
+        $pesananDibatalkan = $orderDibatalkan + $orderDitolak;
 
-        $orderDikerjakan = Order::whereIn(
-            'status',
-            [
-                'Dikonfirmasi',
-                'Dikerjakan',
-                'Diproses',
-            ]
-        )->count();
-
-        $orderSelesai = Order::where(
-            'status',
-            'Selesai'
-        )->count();
-
-        $totalPendapatan = Order::where(
-            'status',
-            'Selesai'
-        )->sum('total_harga');
-
+        $orderBulanIni = Order::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
-        | ORDER BULAN INI
+        | DATA GRAFIK MINGGUAN (5 MINGGU TERAKHIR)
         |--------------------------------------------------------------------------
         */
+        $grafikLabels = [];
+        $grafikTotal = [];
+        $grafikSelesai = [];
 
-        $orderBulanIni = Order::whereMonth(
-            'created_at',
-            now()->month
-        )
-        ->whereYear(
-            'created_at',
-            now()->year
-        )
-        ->count();
+        for ($i = 4; $i >= 0; $i--) {
+            $startWeek = now()->subWeeks($i)->startOfWeek();
+            $endWeek = now()->subWeeks($i)->endOfWeek();
 
+            $grafikLabels[] = $startWeek->translatedFormat('j M') . ' - ' . $endWeek->translatedFormat('j M');
+
+            $grafikTotal[] = Order::whereBetween('created_at', [$startWeek->startOfDay(), $endWeek->endOfDay()])->count();
+            $grafikSelesai[] = Order::where('status', 'Selesai')
+                ->whereBetween('created_at', [$startWeek->startOfDay(), $endWeek->endOfDay()])
+                ->count();
+        }
 
         /*
         |--------------------------------------------------------------------------
-        | Statistik Pengguna
+        | DISTRIBUSI PER KATEGORI & TOP LAYANAN
         |--------------------------------------------------------------------------
         */
+        $kategoriStatistik = Category::all()->map(function ($cat) {
+            $jumlah = Order::whereHas('subCategory', function ($q) use ($cat) {
+                $q->where('id_kategori', $cat->id_kategori);
+            })->count();
 
-        $totalPelanggan = User::where(
-            'role_user',
-            'pelanggan'
-        )->count();
+            return (object) [
+                'nama_kategori' => $cat->nama_kategori,
+                'jumlah'        => $jumlah,
+            ];
+        })->filter(function ($item) {
+            return $item->jumlah > 0;
+        })->values();
 
-        $totalTeknisi = User::where(
-            'role_user',
-            'teknisi'
-        )->count();
+        if ($kategoriStatistik->isEmpty()) {
+            $kategoriStatistik = Category::all()->map(function ($cat) {
+                return (object) [
+                    'nama_kategori' => $cat->nama_kategori,
+                    'jumlah'        => 0,
+                ];
+            });
+        }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Statistik Verifikasi Teknisi
-        |--------------------------------------------------------------------------
-        */
-
-        $teknisiVerifikasiPending = ProfileTeknisi::where(
-            'status_verifikasi',
-            'Menunggu'
-        )->count();
-
-        $teknisiAktif = ProfileTeknisi::where(
-            'status_verifikasi',
-            'Disetujui'
-        )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pesanan Terbaru
-        |--------------------------------------------------------------------------
-        */
-
-        $pesananTerbaru = Order::with([
-            'pelanggan',
-            'teknisi',
-            'subCategory.category',
-        ])
-            ->latest()
+        $topLayanan = SubCategory::withCount(['orders as jumlah_pesanan'])
+            ->orderByDesc('jumlah_pesanan')
             ->take(5)
             ->get();
 
-
         /*
         |--------------------------------------------------------------------------
-        | Teknisi Pending
+        | RINGKASAN PENDAPATAN
         |--------------------------------------------------------------------------
         */
-
-        $teknisiPending = ProfileTeknisi::with([
-            'user',
-            'category',
-            'subCategory',
-        ])
-            ->where(
-                'status_verifikasi',
-                'Menunggu'
-            )
-            ->latest()
-            ->take(5)
-            ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kategori / Layanan Terpopuler
-        |--------------------------------------------------------------------------
-        */
-
-        $kategoriTerpopuler = SubCategory::with(
-            'category'
-        )
-            ->withCount('orders')
-            ->orderByDesc('orders_count')
-            ->take(5)
-            ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kirim Data ke Dashboard
-        |--------------------------------------------------------------------------
-        */
+        $totalPendapatan = Order::sum('total_harga') ?? 0;
+        $pendapatanSelesai = Order::where('status', 'Selesai')->sum('total_harga') ?? 0;
+        $countOrderSelesai = Order::where('status', 'Selesai')->count();
+        $rataRataPerPesanan = $countOrderSelesai > 0 ? round($pendapatanSelesai / $countOrderSelesai) : 0;
 
         return view(
             'dashboard.admin',
@@ -175,9 +128,20 @@ class AdminController extends Controller
                 'orderBulanIni',
                 'teknisiVerifikasiPending',
                 'teknisiAktif',
-                'pesananTerbaru',
-                'teknisiPending',
-                'kategoriTerpopuler'
+                'jumlahPengguna',
+                'jumlahTeknisi',
+                'jumlahMenunggu',
+                'totalPesanan',
+                'pesananSelesai',
+                'sedangDikerjakan',
+                'pesananDibatalkan',
+                'grafikLabels',
+                'grafikTotal',
+                'grafikSelesai',
+                'kategoriStatistik',
+                'topLayanan',
+                'pendapatanSelesai',
+                'rataRataPerPesanan'
             )
         );
     }
@@ -399,6 +363,7 @@ class AdminController extends Controller
         $order->update([
             'id_teknisi' => $teknisi->id_user,
             'status' => 'Dikonfirmasi',
+            'waktu_diterima' => now(),
         ]);
 
         AppNotification::send(
@@ -668,452 +633,12 @@ class AdminController extends Controller
 
     /**
      * =========================================================
-     * STATISTIK ADMIN
+     * STATISTIK ADMIN (REDIRECT KE DASHBOARD UTAMA)
      * =========================================================
      */
-    public function statistik()
+    public function statistik(Request $request)
     {
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL PENGGUNA
-        |--------------------------------------------------------------------------
-        */
-
-        $totalPelanggan = User::where(
-            'role_user',
-            'pelanggan'
-        )->count();
-
-
-        $totalTeknisi = User::where(
-            'role_user',
-            'teknisi'
-        )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS TEKNISI
-        |--------------------------------------------------------------------------
-        */
-
-        $teknisiDisetujui =
-            ProfileTeknisi::where(
-                'status_verifikasi',
-                'Disetujui'
-            )->count();
-
-
-        $teknisiMenunggu =
-            ProfileTeknisi::where(
-                'status_verifikasi',
-                'Menunggu'
-            )->count();
-
-
-        $teknisiDitolak =
-            ProfileTeknisi::where(
-                'status_verifikasi',
-                'Ditolak'
-            )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL ORDER
-        |--------------------------------------------------------------------------
-        */
-
-        $totalOrder = Order::count();
-
-
-        $orderMenunggu =
-            Order::where(
-                'status',
-                'Menunggu'
-            )->count();
-
-
-        $orderDikonfirmasi =
-            Order::where(
-                'status',
-                'Dikonfirmasi'
-            )->count();
-
-
-        $orderDikerjakan =
-            Order::whereIn(
-                'status',
-                [
-                    'Dikerjakan',
-                    'Diproses',
-                ]
-            )->count();
-
-
-        $orderSelesai =
-            Order::where(
-                'status',
-                'Selesai'
-            )->count();
-
-
-        $orderDitolak =
-            Order::where(
-                'status',
-                'Ditolak'
-            )->count();
-
-
-        $orderDibatalkan =
-            Order::where(
-                'status',
-                'Dibatalkan'
-            )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL TRANSAKSI SELESAI
-        |--------------------------------------------------------------------------
-        */
-
-        $totalTransaksiSelesai =
-            Order::where(
-                'status',
-                'Selesai'
-            )->sum(
-                'total_harga'
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER BULAN INI
-        |--------------------------------------------------------------------------
-        */
-
-        $orderBulanIni =
-            Order::whereMonth(
-                'created_at',
-                now()->month
-            )
-                ->whereYear(
-                    'created_at',
-                    now()->year
-                )
-                ->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TRANSAKSI BULAN INI
-        |--------------------------------------------------------------------------
-        */
-
-        $transaksiBulanIni =
-            Order::where(
-                'status',
-                'Selesai'
-            )
-                ->whereMonth(
-                    'created_at',
-                    now()->month
-                )
-                ->whereYear(
-                    'created_at',
-                    now()->year
-                )
-                ->sum(
-                    'total_harga'
-                );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DATA GRAFIK 6 BULAN
-        |--------------------------------------------------------------------------
-        */
-
-        $bulanLabels = [];
-
-        $orderBulanan = [];
-
-        $pendapatanBulanan = [];
-
-
-        for (
-            $i = 5;
-            $i >= 0;
-            $i--
-        ) {
-
-            $tanggal =
-                now()->subMonths(
-                    $i
-                );
-
-
-            $bulanLabels[] =
-                $tanggal->translatedFormat(
-                    'M'
-                );
-
-
-            $orderBulanan[] =
-                Order::whereMonth(
-                    'created_at',
-                    $tanggal->month
-                )
-                    ->whereYear(
-                        'created_at',
-                        $tanggal->year
-                    )
-                    ->count();
-
-
-            $pendapatanBulanan[] =
-                Order::where(
-                    'status',
-                    'Selesai'
-                )
-                    ->whereMonth(
-                        'created_at',
-                        $tanggal->month
-                    )
-                    ->whereYear(
-                        'created_at',
-                        $tanggal->year
-                    )
-                    ->sum(
-                        'total_harga'
-                    );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | LAYANAN TERPOPULER
-        |--------------------------------------------------------------------------
-        */
-
-        $layananTerpopuler =
-            SubCategory::with(
-                'category'
-            )
-                ->withCount(
-                    'orders'
-                )
-                ->orderByDesc(
-                    'orders_count'
-                )
-                ->take(5)
-                ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | METODE PEMBAYARAN
-        |--------------------------------------------------------------------------
-        */
-
-        $jumlahQris =
-            Order::where(
-                'metode_pembayaran',
-                'QRIS'
-            )->count();
-
-
-        $jumlahTunai =
-            Order::where(
-                'metode_pembayaran',
-                'Tunai'
-            )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | REVIEW DAN RATING
-        |--------------------------------------------------------------------------
-        */
-
-        $totalReview =
-            Review::count();
-
-
-        $rataRataRating =
-            Review::avg(
-                'rating'
-            );
-
-
-        $rataRataRating =
-            $rataRataRating !== null
-                ? round(
-                    $rataRataRating,
-                    1
-                )
-                : 0;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DISTRIBUSI RATING
-        |--------------------------------------------------------------------------
-        */
-
-        $rating5 =
-            Review::where(
-                'rating',
-                5
-            )->count();
-
-
-        $rating4 =
-            Review::where(
-                'rating',
-                4
-            )->count();
-
-
-        $rating3 =
-            Review::where(
-                'rating',
-                3
-            )->count();
-
-
-        $rating2 =
-            Review::where(
-                'rating',
-                2
-            )->count();
-
-
-        $rating1 =
-            Review::where(
-                'rating',
-                1
-            )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VARIABEL TAMBAHAN UNTUK VIEW STATISTIK
-        |--------------------------------------------------------------------------
-        */
-
-        $totalPesanan = $totalOrder;
-        $pesananSelesai = $orderSelesai;
-        $sedangDikerjakan = $orderDikerjakan + $orderDikonfirmasi;
-        $pesananDibatalkan = $orderDibatalkan + $orderDitolak;
-
-        $grafikLabels = $bulanLabels;
-        $grafikTotal = $orderBulanan;
-
-        $grafikSelesai = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $tanggal = now()->subMonths($i);
-            $grafikSelesai[] = Order::where('status', 'Selesai')
-                ->whereMonth('created_at', $tanggal->month)
-                ->whereYear('created_at', $tanggal->year)
-                ->count();
-        }
-
-        $kategoriStatistik = Category::all()->map(function ($cat) {
-            $jumlah = Order::whereHas('subCategory', function ($q) use ($cat) {
-                $q->where('id_kategori', $cat->id_kategori);
-            })->count();
-
-            return (object) [
-                'nama_kategori' => $cat->nama_kategori,
-                'jumlah'        => $jumlah,
-            ];
-        })->filter(function ($item) {
-            return $item->jumlah > 0;
-        })->values();
-
-        if ($kategoriStatistik->isEmpty()) {
-            $kategoriStatistik = Category::all()->map(function ($cat) {
-                return (object) [
-                    'nama_kategori' => $cat->nama_kategori,
-                    'jumlah'        => 0,
-                ];
-            });
-        }
-
-        $topLayanan = SubCategory::withCount(['orders as jumlah_pesanan'])
-            ->orderByDesc('jumlah_pesanan')
-            ->take(5)
-            ->get();
-
-        $totalPendapatan = Order::sum('total_harga') ?? 0;
-        $pendapatanSelesai = Order::where('status', 'Selesai')->sum('total_harga') ?? 0;
-        $countOrderSelesai = Order::where('status', 'Selesai')->count();
-        $rataRataPerPesanan = $countOrderSelesai > 0 ? round($pendapatanSelesai / $countOrderSelesai) : 0;
-
-        /*
-        |--------------------------------------------------------------------------
-        | RETURN VIEW
-        |--------------------------------------------------------------------------
-        */
-
-        return view(
-            'dashboard.admin-statistik',
-            compact(
-                'totalPelanggan',
-                'totalTeknisi',
-
-                'teknisiDisetujui',
-                'teknisiMenunggu',
-                'teknisiDitolak',
-
-                'totalOrder',
-                'totalPesanan',
-                'pesananSelesai',
-                'sedangDikerjakan',
-                'pesananDibatalkan',
-
-                'orderMenunggu',
-                'orderDikonfirmasi',
-                'orderDikerjakan',
-                'orderSelesai',
-                'orderDitolak',
-                'orderDibatalkan',
-
-                'totalTransaksiSelesai',
-                'totalPendapatan',
-                'pendapatanSelesai',
-                'rataRataPerPesanan',
-
-                'orderBulanIni',
-                'transaksiBulanIni',
-
-                'bulanLabels',
-                'orderBulanan',
-                'pendapatanBulanan',
-
-                'grafikLabels',
-                'grafikTotal',
-                'grafikSelesai',
-
-                'kategoriStatistik',
-                'topLayanan',
-                'layananTerpopuler',
-
-                'jumlahQris',
-                'jumlahTunai',
-
-                'totalReview',
-                'rataRataRating',
-
-                'rating5',
-                'rating4',
-                'rating3',
-                'rating2',
-                'rating1'
-            )
-        );
+        return redirect()->route('admin.dashboard', $request->all());
     }
 
     /**

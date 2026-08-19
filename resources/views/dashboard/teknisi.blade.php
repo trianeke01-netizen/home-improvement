@@ -522,31 +522,75 @@
 
 
                         {{-- ================================================= --}}
-                        {{-- DIKONFIRMASI → MULAI DIKERJAKAN --}}
+                        {{-- DIKONFIRMASI → MULAI DIKERJAKAN (SUDAH DI LOKASI) --}}
                         {{-- ================================================= --}}
 
                         @if($order->status === 'Dikonfirmasi')
 
+                            @php
+                                $waktuDiterima = $order->waktu_diterima ?? $order->created_at;
+                                $batasWaktu = \Carbon\Carbon::parse($waktuDiterima)->addMinutes(60);
+                                $sisaDetik = max(0, now()->diffInSeconds($batasWaktu, false));
+                                $menitSisa = floor($sisaDetik / 60);
+                                $detikSisa = $sisaDetik % 60;
+                            @endphp
+
+                            <div class="mt-4 p-3.5 rounded-xl border border-amber-200 bg-amber-50 flex items-center justify-between text-xs text-amber-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">⏱️</span>
+                                    <div>
+                                        <span class="font-bold">Batas Waktu Tiba di Lokasi (1 Jam):</span>
+                                        <p class="text-[11px] text-amber-700">Klik tombol di bawah setelah Anda tiba di lokasi pelanggan.</p>
+                                    </div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="inline-block px-3 py-1 rounded-lg bg-amber-200/80 font-mono font-bold text-amber-900 text-xs shadow-2xs" id="countdown-{{ $order->id_order }}">
+                                        {{ sprintf('%02d:%02d', $menitSisa, $detikSisa) }}
+                                    </span>
+                                </div>
+                            </div>
+
                             <form
                                 action="{{ route('order.mulai', $order->id_order) }}"
                                 method="POST"
-                                class="mt-5"
+                                class="mt-4"
                             >
 
                                 @csrf
 
                                 <button
                                     type="submit"
-                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition"
+                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2"
                                 >
-                                    Mulai Dikerjakan
+                                    📍 Mulai Dikerjakan (Sudah di Lokasi)
                                 </button>
 
                             </form>
 
+                            <script>
+                                (function() {
+                                    let sisaDetik = {{ $sisaDetik }};
+                                    const countdownEl = document.getElementById('countdown-{{ $order->id_order }}');
+                                    if (!countdownEl) return;
+
+                                    const timer = setInterval(function() {
+                                        if (sisaDetik <= 0) {
+                                            clearInterval(timer);
+                                            countdownEl.innerText = "WAKTU HABIS";
+                                            countdownEl.classList.remove('bg-amber-200/80', 'text-amber-900');
+                                            countdownEl.classList.add('bg-red-600', 'text-white');
+                                            return;
+                                        }
+                                        sisaDetik--;
+                                        let m = Math.floor(sisaDetik / 60);
+                                        let s = sisaDetik % 60;
+                                        countdownEl.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                                    }, 1000);
+                                })();
+                            </script>
 
                         {{-- ================================================= --}}
-                        {{-- DIKERJAKAN → SELESAI --}}
+                        {{-- DIKERJAKAN → SELESAI (DENGAN BUKTI FOTO) --}}
                         {{-- ================================================= --}}
 
                         @elseif($order->status === 'Dikerjakan')
@@ -554,16 +598,33 @@
                             <form
                                 action="{{ route('order.selesai', $order->id_order) }}"
                                 method="POST"
-                                class="mt-5"
+                                enctype="multipart/form-data"
+                                class="mt-4 space-y-3"
                             >
 
                                 @csrf
 
+                                <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/50">
+                                    <label class="block text-xs font-bold text-slate-800 mb-1">
+                                        📸 Upload Bukti Foto Hasil Perbaikan (Wajib)
+                                    </label>
+                                    <p class="text-[11px] text-slate-500 mb-2">
+                                        Lampirkan bukti foto perbaikan agar pesanan dapat diselesaikan.
+                                    </p>
+                                    <input
+                                        type="file"
+                                        name="foto_bukti"
+                                        accept="image/*"
+                                        required
+                                        class="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-blue-600 file:cursor-pointer cursor-pointer bg-white rounded-xl border border-slate-200 p-1"
+                                    >
+                                </div>
+
                                 <button
                                     type="submit"
-                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-green-600 transition"
+                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-emerald-600 transition flex items-center justify-center gap-2"
                                 >
-                                    Tandai Selesai
+                                    ✅ Tandai Selesai & Kirim Bukti
                                 </button>
 
                             </form>
