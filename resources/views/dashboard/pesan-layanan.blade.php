@@ -41,7 +41,7 @@
 
                 @foreach($kategori as $item)
 
-                    <label class="cursor-pointer">
+                    <label class="cursor-pointer group relative">
 
                         <input
                             type="radio"
@@ -50,24 +50,36 @@
                             class="hidden peer"
                             data-sub='@json($item->subCategories)'>
 
+                        {{-- SELECTION INDICATOR BADGE --}}
+                        <div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-sky-600 text-white opacity-0 peer-checked:opacity-100 scale-75 peer-checked:scale-100 transition-all duration-200 flex items-center justify-center z-10 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        </div>
 
                         <div
                             class="rounded-2xl
-                                   border-2
+                                   border
                                    border-slate-200
                                    bg-white
-                                   h-48
+                                   p-5
+                                   h-44
                                    flex
                                    flex-col
-                                   justify-center
+                                   justify-between
                                    items-center
+                                   text-center
                                    transition-all
                                    duration-300
-                                   hover:border-sky-500
-                                   hover:shadow-xl
-                                   peer-checked:bg-sky-500
+                                   hover:-translate-y-1
+                                   hover:border-sky-400
+                                   hover:shadow-lg
+                                   hover:shadow-sky-500/10
+                                   peer-checked:bg-sky-50/70
                                    peer-checked:border-sky-500
-                                   peer-checked:text-white">
+                                   peer-checked:ring-2
+                                   peer-checked:ring-sky-500/20
+                                   peer-checked:shadow-md">
 
 
                             {{-- ================================================= --}}
@@ -76,103 +88,55 @@
 
                             @if($item->nama_kategori == "Kelistrikan")
 
-                                <div
-                                    class="w-16 h-16
-                                           rounded-2xl
-                                           bg-yellow-100
-                                           flex
-                                           items-center
-                                           justify-center
-                                           text-xl
-                                           mb-5">
-
-                                    ⚡
-
+                                <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition duration-300 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                                    </svg>
                                 </div>
-
 
                             @elseif($item->nama_kategori == "Perawatan AC")
 
-                                <div
-                                    class="w-16 h-16
-                                           rounded-2xl
-                                           bg-sky-100
-                                           flex
-                                           items-center
-                                           justify-center
-                                           text-xl
-                                           mb-5">
-
-                                    ❄️
-
+                                <div class="w-14 h-14 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-sky-500 group-hover:text-white transition duration-300 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                    </svg>
                                 </div>
 
+                            @elseif($item->nama_kategori == "Plumbing" || $item->nama_kategori == "Perbaikan Plumbing")
 
-                            @elseif(
-                                $item->nama_kategori == "Plumbing" ||
-                                $item->nama_kategori == "Perbaikan Plumbing"
-                            )
-
-                                <div
-                                    class="w-16 h-16
-                                           rounded-2xl
-                                           bg-cyan-100
-                                           flex
-                                           items-center
-                                           justify-center
-                                           text-xl
-                                           mb-5">
-
-                                    🚰
-
+                                <div class="w-14 h-14 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-cyan-500 group-hover:text-white transition duration-300 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918" />
+                                    </svg>
                                 </div>
-
 
                             @elseif($item->nama_kategori == "Perbaikan Bangunan")
 
-                                <div
-                                    class="w-16 h-16
-                                           rounded-2xl
-                                           bg-orange-100
-                                           flex
-                                           items-center
-                                           justify-center
-                                           text-xl
-                                           mb-5">
-
-                                    🏠
-
+                                <div class="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-orange-500 group-hover:text-white transition duration-300 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                    </svg>
                                 </div>
-
 
                             @else
 
-                                <div
-                                    class="w-16 h-16
-                                           rounded-2xl
-                                           bg-gray-100
-                                           flex
-                                           items-center
-                                           justify-center
-                                           text-xl
-                                           mb-5">
-
-                                    🔧
-
+                                <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition duration-300 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l5.654-4.654m.569-.569L13.12 7.07c.384-.317.626-.74.766-1.208m-5.8 5.8a4.5 4.5 0 00-6.364 0" />
+                                    </svg>
                                 </div>
 
                             @endif
 
 
-                            <span
-                                class="font-semibold
-                                       text-center
-                                       px-3
-                                       leading-6">
-
-                                {{ $item->nama_kategori }}
-
-                            </span>
+                            <div class="mt-2">
+                                <span class="font-bold text-sm text-slate-800 leading-snug block group-hover:text-sky-600 transition">
+                                    {{ $item->nama_kategori }}
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium block mt-0.5">
+                                    Pilih Layanan
+                                </span>
+                            </div>
 
                         </div>
 
@@ -652,22 +616,23 @@
 
 
                         {{-- ================================================= --}}
-                        {{-- QRIS --}}
+                        {{-- PEMBAYARAN ONLINE --}}
                         {{-- ================================================= --}}
 
                         <label
                             class="flex
                                    items-center
-                                   gap-3
-                                   p-3
-                                   rounded-xl
+                                   gap-3.5
+                                   p-4
+                                   rounded-2xl
                                    bg-white
                                    border
                                    border-slate-200
                                    cursor-pointer
-                                   hover:border-sky-400
-                                   hover:bg-sky-50
-                                   transition">
+                                   hover:border-sky-500
+                                   hover:bg-sky-50/50
+                                   transition
+                                   group shadow-xs">
 
 
                             <input
@@ -681,13 +646,19 @@
                                        border-slate-300
                                        focus:ring-sky-500">
 
-                            <div>
-                                <p
-                                    class="text-sm
-                                           font-semibold
-                                           text-slate-800">
-                                    QRIS
-                                </p>
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                        <path stroke-linecap="round" d="M3 10h18"/>
+                                        <path stroke-linecap="round" d="M7 15h4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900 group-hover:text-sky-700 transition">
+                                        Pembayaran Online
+                                    </p>
+                                </div>
                             </div>
                         </label>
 
@@ -699,16 +670,17 @@
                         <label
                             class="flex
                                    items-center
-                                   gap-3
-                                   p-3
-                                   rounded-xl
+                                   gap-3.5
+                                   p-4
+                                   rounded-2xl
                                    bg-white
                                    border
                                    border-slate-200
                                    cursor-pointer
-                                   hover:border-sky-400
-                                   hover:bg-sky-50
-                                   transition">
+                                   hover:border-emerald-500
+                                   hover:bg-emerald-50/50
+                                   transition
+                                   group shadow-xs">
 
 
                             <input
@@ -721,13 +693,17 @@
                                        border-slate-300
                                        focus:ring-sky-500">
 
-                            <div>
-                                <p
-                                    class="text-sm
-                                           font-semibold
-                                           text-slate-800">
-                                    Tunai
-                                </p>
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-9h6a2 2 0 010 4H9a2 2 0 000 4h6" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition">
+                                        Tunai
+                                    </p>
+                                </div>
                             </div>
                         </label>
                     </div>
@@ -856,22 +832,12 @@ document.addEventListener('DOMContentLoaded', function () {
         totalDisplay.textContent = '-';
     }
 
-
-    /* =====================================================
-       HITUNG BIAYA
-    ===================================================== */
-
     function hitungBiaya()
     {
 
         const jml =
             parseInt(jumlah.value) || 0;
 
-
-        /*
-         * Jika subkategori belum dipilih
-         * atau jumlah unit belum diisi
-         */
 
         if (
             hargaPerUnit <= 0 ||
@@ -883,28 +849,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-
-        /*
-         * Tampilkan harga/unit
-         */
-
         hargaDisplay.textContent =
             formatRupiah(
                 hargaPerUnit
             );
 
-
-        /*
-         * Tampilkan jumlah unit
-         */
-
         jumlahDisplay.textContent =
             jml;
 
-
-        /*
-         * Hitung total
-         */
 
         const total =
             hargaPerUnit * jml;
@@ -916,21 +868,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    /* =====================================================
-       PILIH KATEGORI
-    ===================================================== */
-
     kategori.forEach(function (item) {
 
         item.addEventListener(
             'change',
             function () {
-
-
-                /*
-                 * Ambil data subkategori
-                 * dari database.
-                 */
 
                 let data = [];
 
@@ -952,21 +894,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 }
 
-
-                /*
-                 * Kosongkan dropdown
-                 */
-
                 subKategori.innerHTML = `
                     <option value="">
                         Pilih Sub Kategori
                     </option>
                 `;
-
-
-                /*
-                 * Masukkan subkategori
-                 */
 
                 data.forEach(
                     function (sub) {
@@ -984,12 +916,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         option.textContent =
                             sub.nama_sub_kategori;
 
-
-                        /*
-                         * Harga berasal dari
-                         * database.
-                         */
-
                         option.dataset.harga =
                             sub.harga_per_unit;
 
@@ -1000,11 +926,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     }
                 );
-
-
-                /*
-                 * Reset harga
-                 */
 
                 hargaPerUnit = 0;
 
@@ -1017,11 +938,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 
-
-    /* =====================================================
-       PILIH SUB KATEGORI
-    ===================================================== */
-
     subKategori.addEventListener(
         'change',
         function () {
@@ -1031,11 +947,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.options[
                     this.selectedIndex
                 ];
-
-
-            /*
-             * Jika belum memilih subkategori
-             */
 
             if (
                 !selected ||
@@ -1049,30 +960,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-
-            /*
-             * Ambil harga dari database
-             */
-
             hargaPerUnit =
                 parseFloat(
                     selected.dataset.harga
                 ) || 0;
-
-
-            /*
-             * Hitung biaya
-             */
-
             hitungBiaya();
 
         }
     );
-
-
-    /* =====================================================
-       JUMLAH UNIT
-    ===================================================== */
 
     jumlah.addEventListener(
         'input',
@@ -1083,10 +978,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     );
 
-
-    /* =====================================================
-       UPLOAD FOTO
-    ===================================================== */
 
     foto.addEventListener(
         'change',

@@ -237,73 +237,60 @@ class OrderController extends Controller
     {
         $user = Auth::user();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pastikan user adalah pelanggan
-        |--------------------------------------------------------------------------
-        */
-
         if ($user->role_user !== 'pelanggan') {
             abort(403);
         }
 
+        $order = Order::where('id_order', $id)->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cari order milik pelanggan
-        |--------------------------------------------------------------------------
-        |
-        | Order hanya dapat dibatalkan jika:
-        |
-        | - ID order sesuai
-        | - Milik pelanggan yang sedang login
-        | - Status masih Menunggu
-        | - Belum memiliki teknisi
-        |
-        */
+        if (!$order) {
+            return redirect()
+                ->route('dashboard.riwayat-order')
+                ->with('error', 'Pesanan tidak ditemukan.');
+        }
 
-        $order = Order::where(
-            'id_order',
-            $id
-        )
-            ->where(
-                'id_pelanggan',
-                $user->id_user
-            )
-            ->where(
-                'status',
-                'Menunggu'
-            )
-            ->whereNull(
-                'id_teknisi'
-            )
-            ->firstOrFail();
+        if ($order->id_pelanggan != $user->id_user) {
+            return redirect()
+                ->route('dashboard.riwayat-order')
+                ->with('error', 'Anda tidak memiliki hak untuk membatalkan pesanan ini.');
+        }
 
+        if ($order->status === 'Dibatalkan') {
+            return redirect()
+                ->route('dashboard.riwayat-order')
+                ->with('info', 'Pesanan ini sudah dibatalkan sebelumnya.');
+        }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ubah status menjadi Dibatalkan
-        |--------------------------------------------------------------------------
-        */
+        if (in_array($order->status, ['Dikerjakan', 'Selesai'])) {
+            return redirect()
+                ->route('dashboard.riwayat-order')
+                ->with('error', 'Pesanan tidak dapat dibatalkan karena sedang dikerjakan atau telah selesai.');
+        }
+
+        if (!in_array($order->status, ['Menunggu', 'Dikonfirmasi', 'Pengajuan_Batal'])) {
+            return redirect()
+                ->route('dashboard.riwayat-order')
+                ->with('error', 'Pesanan tidak dapat dibatalkan pada status saat ini.');
+        }
+
+        // Jika ada teknisi yang sudah menunjuk/dikonfirmasi, beri notifikasi
+        if ($order->id_teknisi) {
+            AppNotification::send(
+                $order->id_teknisi,
+                'Pesanan Dibatalkan Pelanggan',
+                "Pelanggan telah membatalkan Pesanan #{$order->id_order}.",
+                'order_dibatalkan',
+                route('dashboard.teknisi.riwayat-order')
+            );
+        }
 
         $order->update([
             'status' => 'Dibatalkan',
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Kembali ke riwayat order
-        |--------------------------------------------------------------------------
-        */
-
         return redirect()
             ->route('dashboard.riwayat-order')
-            ->with(
-                'success',
-                'Pesanan berhasil dibatalkan.'
-            );
+            ->with('success', 'Pesanan berhasil dibatalkan.');
     }
 
 
@@ -352,6 +339,24 @@ class OrderController extends Controller
             );
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Cek apakah teknisi sedang memiliki orderan aktif
+        |--------------------------------------------------------------------------
+        */
+
+        $adaOrderBerjalan = Order::where('id_teknisi', $user->id_user)
+            ->whereIn('status', ['Dikonfirmasi', 'Dikerjakan', 'Diproses'])
+            ->whereNull('waktu_pengajuan_batal')
+            ->exists();
+
+        if ($adaOrderBerjalan) {
+            return back()->with(
+                'error',
+                'Anda masih memiliki pesanan yang sedang berjalan. Selesaikan pesanan tersebut terlebih dahulu sebelum menerima pesanan baru.'
+            );
+        }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -381,7 +386,16 @@ class OrderController extends Controller
                 'id_sub_kategori',
                 $profile->id_sub_kategori
             )
-            ->firstOrFail();
+            ->first();
+
+        if (!$order) {
+            return redirect()
+                ->route('dashboard.teknisi')
+                ->with(
+                    'error',
+                    'Maaf, pesanan ini sudah diambil oleh teknisi lain atau sudah tidak tersedia.'
+                );
+        }
 
 
         /*
@@ -501,7 +515,6 @@ class OrderController extends Controller
         | Tidak mengubah status order.
         |
         | Order tetap:
-        |
         | status = Menunggu
         | id_teknisi = NULL
         |
@@ -509,6 +522,12 @@ class OrderController extends Controller
         | yang sama masih dapat menerimanya.
         |
         */
+
+        $excluded = $order->excluded_teknisi_ids ?? [];
+        if (!in_array((int)$user->id_user, array_map('intval', $excluded))) {
+            $excluded[] = (int)$user->id_user;
+            $order->update(['excluded_teknisi_ids' => $excluded]);
+        }
 
         return back()->with(
             'success',
@@ -577,24 +596,11 @@ class OrderController extends Controller
         */
 
         if ($order->waktu_diterima && \Carbon\Carbon::parse($order->waktu_diterima)->addMinutes(60)->isPast()) {
-
-            $order->update([
-                'status' => 'Dibatalkan',
-            ]);
-
-            if ($order->id_pelanggan) {
-                AppNotification::send(
-                    $order->id_pelanggan,
-                    'Pesanan Dibatalkan',
-                    "Pesanan #{$order->id_order} dibatalkan otomatis karena teknisi tidak mulai pengerjaan dalam 1 jam.",
-                    'order_dibatalkan',
-                    route('dashboard.detail-order', $order->id_order)
-                );
-            }
+            Order::releaseExpiredOrders();
 
             return back()->with(
                 'error',
-                'Batas waktu 1 jam untuk tiba di lokasi/mulai pengerjaan telah habis. Pesanan dibatalkan otomatis.'
+                'Batas waktu 1 jam untuk tiba di lokasi/mulai pengerjaan telah habis. Pesanan ini telah dialihkan untuk mencari teknisi pengganti.'
             );
         }
 
@@ -715,10 +721,97 @@ class OrderController extends Controller
             );
         }
 
+        // Send confirmation notification to technician about released funds
+        $formattedNominal = 'Rp ' . number_format($order->total_harga ?? 0, 0, ',', '.');
+        AppNotification::send(
+            $user->id_user,
+            'Dana Pesanan Disalurkan',
+            "Bukti foto berhasil diunggah! Pembayaran sebesar {$formattedNominal} untuk Pesanan #{$order->id_order} telah resmi disalurkan ke akun Anda.",
+            'pembayaran_berhasil',
+            route('dashboard.teknisi')
+        );
+
 
         return back()->with(
             'success',
-            'Pesanan berhasil diselesaikan dengan bukti foto perbaikan terlampir.'
+            "Pesanan #{$order->id_order} berhasil diselesaikan! Bukti foto tersimpan dan dana sebesar {$formattedNominal} telah disalurkan."
+        );
+    }
+
+    /**
+     * Teknisi mengajukan pembatalan / melaporkan kendala ke Admin.
+     */
+    public function ajukanBatalTeknisi(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if ($user->role_user !== 'teknisi') {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'alasan_batal_teknisi' => 'required|string|max:255',
+            'catatan_batal_teknisi' => 'required|string|max:1000',
+            'foto_kendala' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5048',
+        ], [
+            'alasan_batal_teknisi.required' => 'Pilih alasan utama kendala / pembatalan.',
+            'catatan_batal_teknisi.required' => 'Tuliskan penjelasan catatan kendala yang dialami.',
+            'foto_kendala.image' => 'File foto kendala harus berupa gambar (JPG, PNG, WebP).',
+        ]);
+
+        $order = Order::where('id_order', $id)
+            ->where('id_teknisi', $user->id_user)
+            ->firstOrFail();
+
+        if (in_array($order->status, ['Selesai', 'Dibatalkan', 'Ditolak'])) {
+            return back()->with('error', 'Pesanan ini sudah selesai atau dibatalkan.');
+        }
+
+        $fotoKendala = null;
+        if ($request->hasFile('foto_kendala')) {
+            $fotoKendala = $request->file('foto_kendala')->store('foto-kendala', 'public');
+        }
+
+        $excluded = $order->excluded_teknisi_ids ?? [];
+        if (!in_array((int)$user->id_user, array_map('intval', $excluded))) {
+            $excluded[] = (int)$user->id_user;
+        }
+
+        $order->update([
+            'status' => 'Pengajuan_Batal',
+            'alasan_batal_teknisi' => $validated['alasan_batal_teknisi'],
+            'catatan_batal_teknisi' => $validated['catatan_batal_teknisi'],
+            'foto_kendala' => $fotoKendala,
+            'waktu_pengajuan_batal' => now(),
+            'excluded_teknisi_ids' => $excluded,
+        ]);
+
+        // Kirim notifikasi ke Admin
+        $admins = User::where('role_user', 'admin')->get();
+        foreach ($admins as $admin) {
+            AppNotification::send(
+                $admin->id_user,
+                'Pengajuan Pembatalan Teknisi',
+                "Teknisi {$user->nama} mengajukan pembatalan untuk Pesanan #{$order->id_order}. Alasan: {$validated['alasan_batal_teknisi']}.",
+                'pengajuan_batal',
+                route('admin.orders')
+            );
+        }
+
+        // Kirim notifikasi ke Pelanggan agar tahu teknisi terkendala & sistem akan mengalihkan
+        if ($order->id_pelanggan) {
+            AppNotification::send(
+                $order->id_pelanggan,
+                'Teknisi Mengajukan Kendala',
+                "Teknisi {$user->nama} mengajukan kendala kedatangan pada Pesanan #{$order->id_order} (Alasan: {$validated['alasan_batal_teknisi']}). Admin sedang memproses pengalihan teknisi pengganti.",
+                'pengajuan_batal_pelanggan',
+                route('dashboard.detail-order', $order->id_order)
+            );
+        }
+
+        return back()->with(
+            'success',
+            "Pengajuan pembatalan untuk Pesanan #{$order->id_order} telah dikirim ke Admin. Harap tunggu verifikasi Admin."
         );
     }
 }

@@ -12,11 +12,6 @@ use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | REDIRECT DASHBOARD SESUAI ROLE
-    |--------------------------------------------------------------------------
-    */
 
     public function index()
     {
@@ -30,35 +25,16 @@ class DashboardController extends Controller
         };
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD PELANGGAN
-    |--------------------------------------------------------------------------
-    */
-
     public function pelanggan()
     {
+        Order::releaseExpiredOrders();
+
         $userId = Auth::user()->id_user;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL ORDER
-        |--------------------------------------------------------------------------
-        */
 
         $totalOrder = Order::where(
             'id_pelanggan',
             $userId
         )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER SEDANG BERJALAN
-        |--------------------------------------------------------------------------
-        */
 
         $sedangBerjalan = Order::where(
             'id_pelanggan',
@@ -71,13 +47,6 @@ class DashboardController extends Controller
             ])
             ->count();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER SELESAI
-        |--------------------------------------------------------------------------
-        */
-
         $selesai = Order::where(
             'id_pelanggan',
             $userId
@@ -88,16 +57,10 @@ class DashboardController extends Controller
             )
             ->count();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER AKTIF
-        |--------------------------------------------------------------------------
-        */
-
         $orderAktif = Order::with([
             'subCategory.category',
             'teknisi',
+            'payment',
         ])
             ->where(
                 'id_pelanggan',
@@ -112,16 +75,11 @@ class DashboardController extends Controller
             ->take(1)
             ->get();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | RIWAYAT ORDER
-        |--------------------------------------------------------------------------
-        */
-
         $riwayatOrder = Order::with([
             'subCategory.category',
             'teknisi',
+            'payment',
+            'review',
         ])
             ->where(
                 'id_pelanggan',
@@ -134,13 +92,6 @@ class DashboardController extends Controller
             ->latest()
             ->take(3)
             ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VIEW
-        |--------------------------------------------------------------------------
-        */
 
         return view(
             'dashboard.pelanggan',
@@ -155,57 +106,42 @@ class DashboardController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD TEKNISI
-    |--------------------------------------------------------------------------
-    */
-
     public function teknisi()
     {
+        Order::releaseExpiredOrders();
+
         $user = Auth::user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | PROFILE TEKNISI
-        |--------------------------------------------------------------------------
-        */
 
         $profile = $user->profileTeknisi;
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CEK STATUS VERIFIKASI TEKNISI
-        |--------------------------------------------------------------------------
-        |
-        | Hanya teknisi yang sudah disetujui Admin
-        | yang dapat melihat order masuk.
-        |
-        */
 
         $sudahDiverifikasi =
             $profile &&
             $profile->status_verifikasi === 'Disetujui';
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | SUBKATEGORI KEAHLIAN
-        |--------------------------------------------------------------------------
-        */
-
         $subKategoriId = $profile?->id_sub_kategori;
 
+        $orderDikerjakan = Order::with([
+            'pelanggan',
+            'subCategory.category',
+        ])
+            ->where(
+                'id_teknisi',
+                $user->id_user
+            )
+            ->whereIn('status', [
+                'Dikonfirmasi',
+                'Dikerjakan',
+                'Diproses',
+                'Pengajuan_Batal',
+            ])
+            ->latest()
+            ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER MASUK
-        |--------------------------------------------------------------------------
-        */
+        $hasActiveOrder = $orderDikerjakan->count() > 0;
 
-        if ($sudahDiverifikasi && $subKategoriId) {
+        if ($sudahDiverifikasi && $subKategoriId && !$hasActiveOrder) {
 
             $orderMasuk = Order::with([
                 'pelanggan',
@@ -223,62 +159,31 @@ class DashboardController extends Controller
                     $subKategoriId
                 )
                 ->latest()
-                ->get();
+                ->get()
+                ->filter(function ($order) use ($user) {
+                    $excluded = $order->excluded_teknisi_ids ?? [];
+                    if (!is_array($excluded)) return true;
+                    return !in_array((int)$user->id_user, array_map('intval', $excluded));
+                });
 
         } else {
-
-            /*
-            |--------------------------------------------------------------------------
-            | BELUM DIVERIFIKASI
-            |--------------------------------------------------------------------------
-            |
-            | Tidak mendapatkan order masuk.
-            |
-            */
 
             $orderMasuk = collect();
         }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER SEDANG DIKERJAKAN
-        |--------------------------------------------------------------------------
-        */
-
-        $orderDikerjakan = Order::with([
-            'pelanggan',
-            'subCategory.category',
-        ])
-            ->where(
-                'id_teknisi',
-                $user->id_user
-            )
-            ->whereIn('status', [
-                'Dikonfirmasi',
-                'Dikerjakan',
-            ])
-            ->latest()
-            ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL ORDER
-        |--------------------------------------------------------------------------
-        */
-
-        $totalOrder = Order::where(
-            'id_teknisi',
-            $user->id_user
-        )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER HARI INI
-        |--------------------------------------------------------------------------
-        */
+        $totalOrder = Order::all()
+            ->filter(function ($order) use ($user) {
+                if ((int) $order->id_teknisi === (int) $user->id_user) {
+                    return true;
+                }
+                $excluded = $order->excluded_teknisi_ids ?? [];
+                if (is_array($excluded) && in_array((int) $user->id_user, array_map('intval', $excluded))) {
+                    return true;
+                }
+                return false;
+            })
+            ->count();
 
         $orderHariIni = Order::where(
             'id_teknisi',
@@ -290,13 +195,6 @@ class DashboardController extends Controller
             )
             ->count();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER SELESAI
-        |--------------------------------------------------------------------------
-        */
-
         $orderSelesai = Order::where(
             'id_teknisi',
             $user->id_user
@@ -307,12 +205,16 @@ class DashboardController extends Controller
             )
             ->count();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | RATING
-        |--------------------------------------------------------------------------
-        */
+        $totalPendapatan = Order::where(
+            'id_teknisi',
+            $user->id_user
+        )
+            ->where(
+                'status',
+                'Selesai'
+            )
+            ->whereIn('metode_pembayaran', ['qris', 'online'])
+            ->sum('total_harga') ?? 0;
 
         $rating = Review::whereHas(
             'order',
@@ -329,11 +231,13 @@ class DashboardController extends Controller
         $rating = $rating ?? 0;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | VIEW DASHBOARD TEKNISI
-        |--------------------------------------------------------------------------
-        */
+        $rincianPendapatan = Order::with(['subCategory', 'pelanggan'])
+            ->where('id_teknisi', $user->id_user)
+            ->where('status', 'Selesai')
+            ->whereIn('metode_pembayaran', ['qris', 'online'])
+            ->latest()
+            ->get();
+
 
         return view(
             'dashboard.teknisi',
@@ -343,46 +247,23 @@ class DashboardController extends Controller
                 'totalOrder',
                 'orderHariIni',
                 'orderSelesai',
+                'totalPendapatan',
+                'rincianPendapatan',
                 'rating'
             )
         );
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD ADMIN
-    |--------------------------------------------------------------------------
-    */
-
     public function admin()
     {
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL PENGGUNA
-        |--------------------------------------------------------------------------
-        */
 
         $totalPengguna = \App\Models\User::count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL TEKNISI
-        |--------------------------------------------------------------------------
-        */
 
         $totalTeknisi = \App\Models\User::where(
             'role_user',
             'teknisi'
         )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER BULAN INI
-        |--------------------------------------------------------------------------
-        */
 
         $orderBulanIni = Order::whereMonth(
             'created_at',
@@ -394,24 +275,10 @@ class DashboardController extends Controller
             )
             ->count();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | TEKNISI MENUNGGU VERIFIKASI
-        |--------------------------------------------------------------------------
-        */
-
         $menungguVerifikasi = ProfileTeknisi::where(
             'status_verifikasi',
             'Menunggu'
         )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DATA TEKNISI MENUNGGU VERIFIKASI
-        |--------------------------------------------------------------------------
-        */
 
         $teknisiVerifikasi = ProfileTeknisi::with([
             'user',
@@ -426,12 +293,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATISTIK LAYANAN
-        |--------------------------------------------------------------------------
-        */
 
         $statistikLayanan = Order::with([
             'subCategory.category'
@@ -453,13 +314,6 @@ class DashboardController extends Controller
             })
             ->sortDesc();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | TRANSAKSI TERBARU
-        |--------------------------------------------------------------------------
-        */
-
         $transaksiTerbaru = Order::with([
             'pelanggan',
             'subCategory.category',
@@ -467,13 +321,6 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VIEW ADMIN
-        |--------------------------------------------------------------------------
-        */
 
         return view(
             'dashboard.admin',
@@ -489,23 +336,9 @@ class DashboardController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | PROFIL TEKNISI
-    |--------------------------------------------------------------------------
-    */
-
     public function profilTeknisi()
     {
         $user = Auth::user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | AMBIL PROFILE TEKNISI
-        |--------------------------------------------------------------------------
-        */
 
         $profile = ProfileTeknisi::with([
             'category',
@@ -517,13 +350,6 @@ class DashboardController extends Controller
             )
             ->first();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | DATA USER
-        |--------------------------------------------------------------------------
-        */
-
         $nama = $user->nama ?? '-';
 
         $email = $user->email ?? '-';
@@ -533,42 +359,13 @@ class DashboardController extends Controller
         $alamat = $user->alamat ?? '-';
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | KATEGORI TEKNISI
-        |--------------------------------------------------------------------------
-        |
-        | Nama kategori teknisi disimpan di variabel
-        | $namaKategori supaya tidak bentrok dengan
-        | $kategori yang digunakan untuk dropdown.
-        |
-        */
-
         $namaKategori =
             $profile?->category?->nama_kategori
             ?? '-';
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | KEAHLIAN
-        |--------------------------------------------------------------------------
-        */
-
         $keahlian =
             $profile?->subCategory?->nama_sub_kategori
             ?? '-';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DATA KATEGORI UNTUK FORM EDIT
-        |--------------------------------------------------------------------------
-        |
-        | $kategori sekarang adalah Collection.
-        | Ini yang digunakan oleh @foreach di Blade.
-        |
-        */
 
         $kategori = Category::with(
             'subCategories'
@@ -578,68 +375,23 @@ class DashboardController extends Controller
             )
             ->get();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | DOKUMEN
-        |--------------------------------------------------------------------------
-        */
-
         $ktp = $profile?->ktp;
 
         $fotoDiri = $profile?->foto_diri;
 
         $portofolio = $profile?->portofolio;
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS VERIFIKASI
-        |--------------------------------------------------------------------------
-        */
-
         $statusVerifikasi =
             $profile?->status_verifikasi
             ?? 'Menunggu';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | STATUS KETERSEDIAAN
-        |--------------------------------------------------------------------------
-        */
 
         $statusKetersediaan =
             $profile?->status_ketersediaan
             ?? 'Tersedia';
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | PENGALAMAN
-        |--------------------------------------------------------------------------
-        */
-
         $pengalaman =
             $profile?->pengalaman
             ?? '-';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | LAMA BERGABUNG
-        |--------------------------------------------------------------------------
-        |
-        | PENTING: diffInDays() / diffInMonths() / diffInYears()
-        | pada Carbon versi baru (Carbon 3 / Laravel 11) secara
-        | default mengembalikan nilai FLOAT (mis. 2.9850691564352),
-        | bukan integer. Makanya harus dibulatkan ke bawah dengan
-        | (int) atau floor() supaya hasilnya bulat dan rapi.
-        |
-        | Ditambahkan juga penyesuaian otomatis ke satuan
-        | hari / bulan / tahun supaya tampilannya enak dibaca.
-        |
-        */
 
         $bergabung = '0 Hari';
 
@@ -681,24 +433,10 @@ class DashboardController extends Controller
             }
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | TOTAL ORDER
-        |--------------------------------------------------------------------------
-        */
-
         $totalOrder = Order::where(
             'id_teknisi',
             $user->id_user
         )->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ORDER SELESAI
-        |--------------------------------------------------------------------------
-        */
 
         $orderSelesai = Order::where(
             'id_teknisi',
@@ -709,13 +447,6 @@ class DashboardController extends Controller
                 'Selesai'
             )
             ->count();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | RATING
-        |--------------------------------------------------------------------------
-        */
 
         $rating = Review::whereHas(
             'order',
@@ -730,13 +461,6 @@ class DashboardController extends Controller
         )->avg('rating');
 
         $rating = $rating ?? 0;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | ULASAN
-        |--------------------------------------------------------------------------
-        */
 
         $reviews = Review::with([
             'order.pelanggan',
@@ -755,13 +479,6 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VIEW PROFIL TEKNISI
-        |--------------------------------------------------------------------------
-        */
 
         return view(
             'dashboard.profil-teknisi',
@@ -797,23 +514,9 @@ class DashboardController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE PROFIL TEKNISI
-    |--------------------------------------------------------------------------
-    */
-
     public function updateProfilTeknisi(Request $request)
     {
         $user = Auth::user();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | VALIDASI
-        |--------------------------------------------------------------------------
-        */
 
         $request->validate([
 
@@ -888,23 +591,9 @@ class DashboardController extends Controller
 
         ]);
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | AMBIL PROFILE
-        |--------------------------------------------------------------------------
-        */
-
         $profile = ProfileTeknisi::firstOrNew([
             'id_user' => $user->id_user,
         ]);
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | CEK PERUBAHAN DATA YANG BERHUBUNGAN DENGAN VERIFIKASI
-        |--------------------------------------------------------------------------
-        */
 
         $dataVerifikasiBerubah = false;
 
@@ -945,12 +634,6 @@ class DashboardController extends Controller
         }
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE DATA USER
-        |--------------------------------------------------------------------------
-        */
-
         $user->nama =
             $request->nama;
 
@@ -965,13 +648,6 @@ class DashboardController extends Controller
 
         $user->save();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPDATE PROFILE
-        |--------------------------------------------------------------------------
-        */
-
         $profile->id_kategori =
             $request->id_kategori;
 
@@ -985,27 +661,12 @@ class DashboardController extends Controller
             $request->status_ketersediaan;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | JIKA DATA VERIFIKASI BERUBAH
-        |--------------------------------------------------------------------------
-        |
-        | Admin harus memverifikasi ulang.
-        |
-        */
-
         if ($dataVerifikasiBerubah) {
 
             $profile->status_verifikasi =
                 'Menunggu';
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD KTP
-        |--------------------------------------------------------------------------
-        */
 
         if ($request->hasFile('ktp')) {
 
@@ -1031,13 +692,6 @@ class DashboardController extends Controller
                     );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD FOTO DIRI
-        |--------------------------------------------------------------------------
-        */
-
         if ($request->hasFile('foto_diri')) {
 
             if (
@@ -1061,13 +715,6 @@ class DashboardController extends Controller
                         'public'
                     );
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | UPLOAD PORTOFOLIO
-        |--------------------------------------------------------------------------
-        */
 
         if ($request->hasFile('portofolio')) {
 
@@ -1093,21 +740,8 @@ class DashboardController extends Controller
                     );
         }
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | SIMPAN PROFILE
-        |--------------------------------------------------------------------------
-        */
-
         $profile->save();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | PESAN BERHASIL
-        |--------------------------------------------------------------------------
-        */
 
         if ($dataVerifikasiBerubah) {
 
@@ -1132,13 +766,6 @@ class DashboardController extends Controller
             );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | PESAN LAYANAN
-    |--------------------------------------------------------------------------
-    */
-
     public function pesanLayanan()
     {
         $kategori = Category::with(
@@ -1152,17 +779,13 @@ class DashboardController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RIWAYAT ORDER PELANGGAN
-    |--------------------------------------------------------------------------
-    */
-
     public function riwayatOrder()
     {
         $orders = Order::with([
             'subCategory.category',
             'teknisi',
+            'payment',
+            'review',
         ])
             ->where(
                 'id_pelanggan',
@@ -1177,13 +800,6 @@ class DashboardController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | RIWAYAT ORDER TEKNISI
-    |--------------------------------------------------------------------------
-    */
-
     public function riwayatOrderTeknisi()
     {
         $user = Auth::user();
@@ -1192,12 +808,18 @@ class DashboardController extends Controller
             'pelanggan',
             'subCategory.category',
         ])
-            ->where(
-                'id_teknisi',
-                $user->id_user
-            )
             ->latest()
-            ->get();
+            ->get()
+            ->filter(function ($order) use ($user) {
+                if ((int) $order->id_teknisi === (int) $user->id_user) {
+                    return true;
+                }
+                $excluded = $order->excluded_teknisi_ids ?? [];
+                if (is_array($excluded) && in_array((int) $user->id_user, array_map('intval', $excluded))) {
+                    return true;
+                }
+                return false;
+            });
 
         return view(
             'dashboard.riwayat-order-teknisi',
@@ -1205,38 +827,22 @@ class DashboardController extends Controller
         );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | DETAIL ORDER
-    |--------------------------------------------------------------------------
-    */
-
     public function detailOrder($id)
     {
-        $user = Auth::user();
+        Order::releaseExpiredOrders();
 
-        /*
-        |--------------------------------------------------------------------------
-        | AMBIL ORDER
-        |--------------------------------------------------------------------------
-        */
+        $user = Auth::user();
 
         $order = Order::with([
             'subCategory.category',
             'teknisi',
             'pelanggan',
             'review',
+            'payment',
         ])
             ->where('id_order', $id)
             ->firstOrFail();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | CEK HAK AKSES
-        |--------------------------------------------------------------------------
-        */
 
         if ($user->role_user === 'pelanggan') {
 
@@ -1246,21 +852,20 @@ class DashboardController extends Controller
 
         } elseif ($user->role_user === 'teknisi') {
 
-            if ((int) $order->id_teknisi !== (int) $user->id_user) {
+            $excluded = $order->excluded_teknisi_ids ?? [];
+            $isExcluded = is_array($excluded) && in_array((int) $user->id_user, array_map('intval', $excluded));
+
+            if ((int) $order->id_teknisi !== (int) $user->id_user && !$isExcluded) {
                 abort(403);
             }
+
+        } elseif ($user->role_user === 'admin') {
+
 
         } else {
 
             abort(403);
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TAMPILKAN DETAIL
-        |--------------------------------------------------------------------------
-        */
 
         return view(
             'dashboard.detail-order',
@@ -1268,26 +873,12 @@ class DashboardController extends Controller
         );
     }
 
-
-        /*
-    |--------------------------------------------------------------------------
-    | PROFIL PELANGGAN
-    |--------------------------------------------------------------------------
-    */
-
     public function profil()
     {
         return view(
             'dashboard.profil'
         );
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PEMBAYARAN QRIS
-    |--------------------------------------------------------------------------
-    */
 
     public function pembayaranQris($id)
     {
@@ -1310,13 +901,6 @@ class DashboardController extends Controller
             compact('order')
         );
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | SIMULASI PEMBAYARAN QRIS
-    |--------------------------------------------------------------------------
-    */
 
     public function simulasiPembayaran($id)
     {
@@ -1346,12 +930,6 @@ class DashboardController extends Controller
             );
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE PROFIL PELANGGAN
-    |--------------------------------------------------------------------------
-    */
 
     public function updateProfil(Request $request)
     {

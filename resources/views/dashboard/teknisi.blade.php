@@ -13,8 +13,10 @@
 
     @if($statusVerifikasi === 'Menunggu')
         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-4">
-            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg shrink-0">
-                ⚠️
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
             </div>
             <div>
                 <h3 class="font-bold text-amber-800 text-base">Akun Menunggu Verifikasi Admin</h3>
@@ -25,8 +27,10 @@
         </div>
     @elseif($statusVerifikasi === 'Ditolak')
         <div class="rounded-2xl border border-red-200 bg-red-50 p-5 flex items-start gap-4">
-            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold text-lg shrink-0">
-                ❌
+            <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
             </div>
             <div>
                 <h3 class="font-bold text-red-800 text-base">Verifikasi Akun Ditolak</h3>
@@ -38,158 +42,91 @@
     @endif
 
     {{-- ========================================================= --}}
-    {{-- STATISTIK --}}
+    {{-- STATISTIK TEKNISI --}}
     {{-- ========================================================= --}}
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+        {{-- TOTAL PENDAPATAN TEKNISI (CLICKABLE FOR BREAKDOWN) --}}
+        <div onclick="openModalRincianPendapatan()"
+             class="bg-slate-900 rounded-2xl p-4 sm:p-5 shadow-xs text-white flex flex-col justify-between cursor-pointer hover:shadow-md hover:scale-[1.02] transition duration-200 border border-slate-800 group relative overflow-hidden"
+             style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff;">
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    Total Pendapatan
+                </span>
+                <div class="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-3">
+                <p class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" style="color: #ffffff !important;">
+                    Rp {{ number_format($totalPendapatan ?? 0, 0, ',', '.') }}
+                </p>
+            </div>
+        </div>
 
         {{-- TOTAL ORDER --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+        <a href="{{ route('dashboard.teknisi.riwayat-order') }}" class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-sky-300 transition cursor-pointer block group">
             <div class="flex items-start justify-between gap-4">
-
                 <div>
-                    <p class="text-sm font-semibold text-slate-400">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-sky-600 transition">
                         Total Order
                     </p>
-
-                    <p class="mt-4 text-3xl font-bold text-slate-900">
+                    <p class="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">
                         {{ $totalOrder ?? 0 }}
                     </p>
                 </div>
-
-                <div class="w-14 h-14 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-500 shrink-0">
-                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
-                        <rect
-                            x="5"
-                            y="3"
-                            width="14"
-                            height="18"
-                            rx="2"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        />
-                        <path
-                            d="M9 3.5V2h6v1.5"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
-                        <path
-                            d="M9 9h6M9 13h6M9 17h4"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
+                <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 shrink-0 group-hover:scale-105 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                 </div>
-
             </div>
-        </div>
-
-
-        {{-- ORDER HARI INI --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <div class="flex items-start justify-between gap-4">
-
-                <div>
-                    <p class="text-sm font-semibold text-slate-400">
-                        Order Hari Ini
-                    </p>
-
-                    <p class="mt-4 text-3xl font-bold text-slate-900">
-                        {{ $orderHariIni ?? 0 }}
-                    </p>
-                </div>
-
-                <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
-                        <rect
-                            x="3"
-                            y="5"
-                            width="18"
-                            height="16"
-                            rx="2"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        />
-                        <path
-                            d="M16 3v4M8 3v4M3 10h18"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
-                    </svg>
-                </div>
-
-            </div>
-        </div>
-
+        </a>
 
         {{-- RATING --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
             <div class="flex items-start justify-between gap-4">
-
                 <div>
-                    <p class="text-sm font-semibold text-slate-400">
-                        Rating
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Rating Teknisi
                     </p>
-
-                    <div class="mt-4 flex items-center gap-2">
-                        <p class="text-3xl font-bold text-slate-900">
+                    <div class="mt-2 flex items-center gap-1.5">
+                        <p class="text-2xl sm:text-3xl font-extrabold text-slate-900">
                             {{ number_format($rating ?? 0, 1) }}
                         </p>
-
-                        <span class="text-slate-400 text-lg">
-                            ★
-                        </span>
+                        <span class="text-amber-400 text-lg">★</span>
                     </div>
                 </div>
-
-                <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
-                    <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
+                <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 2.5l2.9 5.88 6.49.94-4.7 4.58 1.11 6.47L12 17.32l-5.8 3.05 1.11-6.47-4.7-4.58 6.49-.94L12 2.5z"/>
                     </svg>
                 </div>
-
             </div>
         </div>
 
-
         {{-- ORDER SELESAI --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+        <a href="{{ route('dashboard.teknisi.riwayat-order') }}" class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs hover:shadow-md hover:border-emerald-300 transition cursor-pointer block group">
             <div class="flex items-start justify-between gap-4">
-
                 <div>
-                    <p class="text-sm font-semibold text-slate-400">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">
                         Order Selesai
                     </p>
-
-                    <p class="mt-4 text-3xl font-bold text-slate-900">
+                    <p class="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-900">
                         {{ $orderSelesai ?? 0 }}
                     </p>
                 </div>
-
-                <div class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center text-green-500 shrink-0">
-                    <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
-                        <circle
-                            cx="12"
-                            cy="12"
-                            r="9"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        />
-                        <path
-                            d="M8 12l2.5 2.5L16 9"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-
             </div>
-        </div>
+        </a>
 
     </div>
 
@@ -232,6 +169,21 @@
 
         {{-- JIKA ADA ORDER MASUK --}}
         @if(isset($orderMasuk) && $orderMasuk->count() > 0)
+
+            @php
+                $adaOrderBerjalan = isset($orderDikerjakan) && $orderDikerjakan->filter(function($o) {
+                    return in_array($o->status, ['Dikonfirmasi', 'Dikerjakan', 'Diproses']) && empty($o->waktu_pengajuan_batal);
+                })->count() > 0;
+            @endphp
+
+            @if($adaOrderBerjalan)
+                <div class="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl text-xs sm:text-sm flex items-center gap-3">
+                    <span class="text-xl">⚠️</span>
+                    <div>
+                        <strong class="font-bold">Order Berjalan Aktif:</strong> Anda saat ini memiliki pesanan yang sedang berlangsung. Selesaikan pesanan tersebut terlebih dahulu untuk dapat menerima pesanan baru.
+                    </div>
+                </div>
+            @endif
 
             <div class="space-y-4">
 
@@ -340,20 +292,31 @@
 
 
                             {{-- TERIMA --}}
-                            <form
-                                action="{{ route('order.terima', $order->id_order) }}"
-                                method="POST"
-                                class="flex-1"
-                            >
-                                @csrf
-
+                            @if($adaOrderBerjalan)
                                 <button
-                                    type="submit"
-                                    class="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition"
+                                    type="button"
+                                    onclick="alert('Anda tidak dapat menerima pesanan baru karena masih memiliki pesanan yang sedang berlangsung! Selesaikan pesanan aktif terlebih dahulu.')"
+                                    class="flex-1 px-4 py-2.5 rounded-xl bg-slate-300 text-slate-500 text-sm font-semibold cursor-not-allowed transition"
+                                    title="Selesaikan orderan aktif terlebih dahulu"
                                 >
-                                    Terima
+                                    Terima (Ada Order Aktif)
                                 </button>
-                            </form>
+                            @else
+                                <form
+                                    action="{{ route('order.terima', $order->id_order) }}"
+                                    method="POST"
+                                    class="flex-1"
+                                >
+                                    @csrf
+
+                                    <button
+                                        type="submit"
+                                        class="w-full px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition"
+                                    >
+                                        Terima
+                                    </button>
+                                </form>
+                            @endif
 
                         </div>
 
@@ -364,39 +327,59 @@
             </div>
 
 
-        {{-- JIKA TIDAK ADA ORDER --}}
+        {{-- JIKA TIDAK ADA ORDER MASUK ATAU SEDANG MEMILIKI ORDER AKTIF --}}
         @else
 
-            <div class="bg-white border border-gray-200 rounded-2xl min-h-[250px] flex flex-col items-center justify-center text-center px-6 py-10">
+            @php
+                $adaOrderBerjalan = isset($orderDikerjakan) && $orderDikerjakan->filter(function($o) {
+                    return in_array($o->status, ['Dikonfirmasi', 'Dikerjakan', 'Diproses']) && empty($o->waktu_pengajuan_batal);
+                })->count() > 0;
+            @endphp
 
-                <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
-
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-
-                        <rect
-                            x="5"
-                            y="3"
-                            width="14"
-                            height="18"
-                            rx="2"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        />
-
-                        <path
-                            d="M9 9h6M9 13h6M9 17h4"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                        />
-
-                    </svg>
-
+            @if($adaOrderBerjalan)
+                <div class="bg-amber-50/80 border border-amber-200/80 rounded-2xl min-h-[160px] flex flex-col items-center justify-center text-center px-6 py-8">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-2">
+                        ⚡
+                    </div>
+                    <h3 class="text-base font-bold text-amber-900">
+                        Anda Sedang Memiliki Pesanan Aktif
+                    </h3>
+                    <p class="mt-1 text-xs text-amber-700 max-w-md">
+                        Selesaikan pesanan yang sedang berjalan di bawah ini terlebih dahulu agar Anda dapat menerima pesanan baru berikutnya.
+                    </p>
                 </div>
-                <h3 class="mt-4 text-base font-semibold text-slate-700">
-                    Belum ada order masuk
-                </h3>
-            </div>
+            @else
+                <div class="bg-white border border-gray-200 rounded-2xl min-h-[250px] flex flex-col items-center justify-center text-center px-6 py-10">
+
+                    <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
+
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+
+                            <rect
+                                x="5"
+                                y="3"
+                                width="14"
+                                height="18"
+                                rx="2"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            />
+
+                            <path
+                                d="M9 9h6M9 13h6M9 17h4"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                            />
+
+                        </svg>
+
+                    </div>
+                    <h3 class="mt-4 text-base font-semibold text-slate-700">
+                        Belum ada order masuk
+                    </h3>
+                </div>
+            @endif
 
         @endif
 
@@ -445,6 +428,13 @@
 
                                         <span class="self-start px-2.5 py-1 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
                                             Dikerjakan
+                                        </span>
+
+                                    {{-- STATUS PENGAJUAN BATAL --}}
+                                    @elseif($order->status === 'Pengajuan_Batal')
+
+                                        <span class="self-start px-2.5 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold border border-red-200">
+                                            🚨 Menunggu Verifikasi Batal Admin
                                         </span>
 
                                     @endif
@@ -520,6 +510,20 @@
 
                         </div>
 
+                        {{-- BANNER JIKA DALAM STATS PENGAJUAN BATAL --}}
+                        @if($order->status === 'Pengajuan_Batal')
+                            <div class="mt-4 p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 space-y-1">
+                                <div class="font-bold text-sm flex items-center gap-2">
+                                    <span>🚨 Pengajuan Pembatalan Terkirim ke Admin</span>
+                                </div>
+                                <p><strong>Alasan Kendala:</strong> {{ $order->alasan_batal_teknisi ?? '-' }}</p>
+                                <p><strong>Catatan:</strong> {{ $order->catatan_batal_teknisi ?? '-' }}</p>
+                                <p class="text-[11px] text-red-600 mt-1 italic">
+                                    Admin sedang meninjau laporan kendala Anda. Jika disetujui, sistem akan otomatis mengalihkan pesanan ke teknisi lain.
+                                </p>
+                            </div>
+                        @endif
+
 
                         {{-- ================================================= --}}
                         {{-- DIKONFIRMASI → MULAI DIKERJAKAN (SUDAH DI LOKASI) --}}
@@ -530,61 +534,80 @@
                             @php
                                 $waktuDiterima = $order->waktu_diterima ?? $order->created_at;
                                 $batasWaktu = \Carbon\Carbon::parse($waktuDiterima)->addMinutes(60);
-                                $sisaDetik = max(0, now()->diffInSeconds($batasWaktu, false));
-                                $menitSisa = floor($sisaDetik / 60);
-                                $detikSisa = $sisaDetik % 60;
+                                $sisaDetikTotal = max(0, (int) floor(now()->diffInSeconds($batasWaktu, false)));
+                                $jamSisa = floor($sisaDetikTotal / 3600);
+                                $menitSisa = floor(($sisaDetikTotal % 3600) / 60);
+                                $detikSisa = $sisaDetikTotal % 60;
                             @endphp
 
-                            <div class="mt-4 p-3.5 rounded-xl border border-amber-200 bg-amber-50 flex items-center justify-between text-xs text-amber-800">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">⏱️</span>
+                            <div class="mt-4 p-4 rounded-2xl border border-amber-200 bg-amber-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-xl">⏱️</span>
                                     <div>
-                                        <span class="font-bold">Batas Waktu Tiba di Lokasi (1 Jam):</span>
-                                        <p class="text-[11px] text-amber-700">Klik tombol di bawah setelah Anda tiba di lokasi pelanggan.</p>
+                                        <span class="font-bold text-amber-900 text-sm">Batas Waktu Tiba di Lokasi (1 Jam):</span>
+                                        <p class="text-xs text-amber-700 mt-0.5">Klik tombol di bawah setelah Anda tiba di lokasi pelanggan.</p>
                                     </div>
                                 </div>
-                                <div class="text-right shrink-0">
-                                    <span class="inline-block px-3 py-1 rounded-lg bg-amber-200/80 font-mono font-bold text-amber-900 text-xs shadow-2xs" id="countdown-{{ $order->id_order }}">
-                                        {{ sprintf('%02d:%02d', $menitSisa, $detikSisa) }}
+                                <div class="text-left sm:text-right shrink-0">
+                                    <span class="inline-block px-3.5 py-1.5 rounded-xl bg-amber-200/90 font-mono font-bold text-amber-950 text-xs shadow-2xs" id="countdown-{{ $order->id_order }}">
+                                        {{ sprintf('%02d Jam %02d Menit %02d Detik', $jamSisa, $menitSisa, $detikSisa) }}
                                     </span>
                                 </div>
                             </div>
 
-                            <form
-                                action="{{ route('order.mulai', $order->id_order) }}"
-                                method="POST"
-                                class="mt-4"
-                            >
-
-                                @csrf
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <form
+                                    action="{{ route('order.mulai', $order->id_order) }}"
+                                    method="POST"
+                                >
+                                    @csrf
+                                    <button
+                                        type="submit"
+                                        class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2 shadow-xs"
+                                    >
+                                        📍 Mulai Dikerjakan (Sudah di Lokasi)
+                                    </button>
+                                </form>
 
                                 <button
-                                    type="submit"
-                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2"
+                                    type="button"
+                                    onclick="openModalKendala('{{ $order->id_order }}')"
+                                    class="w-full px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-sm font-semibold transition flex items-center justify-center gap-2"
                                 >
-                                    📍 Mulai Dikerjakan (Sudah di Lokasi)
+                                    🚨 Laporkan Kendala / Minta Batal
                                 </button>
-
-                            </form>
+                            </div>
 
                             <script>
                                 (function() {
-                                    let sisaDetik = {{ $sisaDetik }};
+                                    let sisaDetik = {{ (int) $sisaDetikTotal }};
                                     const countdownEl = document.getElementById('countdown-{{ $order->id_order }}');
                                     if (!countdownEl) return;
 
-                                    const timer = setInterval(function() {
+                                    function updateTimerText() {
                                         if (sisaDetik <= 0) {
-                                            clearInterval(timer);
-                                            countdownEl.innerText = "WAKTU HABIS";
-                                            countdownEl.classList.remove('bg-amber-200/80', 'text-amber-900');
-                                            countdownEl.classList.add('bg-red-600', 'text-white');
-                                            return;
+                                            countdownEl.innerText = "00 Jam 00 Menit 00 Detik (Waktu Habis)";
+                                            countdownEl.className = "inline-block px-3.5 py-1.5 rounded-xl bg-red-600 font-mono font-bold text-white text-xs shadow-xs";
+                                            return true;
                                         }
+                                        let h = Math.floor(sisaDetik / 3600);
+                                        let m = Math.floor((sisaDetik % 3600) / 60);
+                                        let s = Math.floor(sisaDetik % 60);
+
+                                        let textH = String(h).padStart(2, '0') + ' Jam ';
+                                        let textM = String(m).padStart(2, '0') + ' Menit ';
+                                        let textS = String(s).padStart(2, '0') + ' Detik';
+
+                                        countdownEl.innerText = textH + textM + textS;
+                                        return false;
+                                    }
+
+                                    updateTimerText();
+                                    const timerInterval = setInterval(function() {
                                         sisaDetik--;
-                                        let m = Math.floor(sisaDetik / 60);
-                                        let s = sisaDetik % 60;
-                                        countdownEl.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+                                        if (updateTimerText()) {
+                                            clearInterval(timerInterval);
+                                        }
                                     }, 1000);
                                 })();
                             </script>
@@ -620,16 +643,78 @@
                                     >
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    class="w-full px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-emerald-600 transition flex items-center justify-center gap-2"
-                                >
-                                    ✅ Tandai Selesai & Kirim Bukti
-                                </button>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <button
+                                        type="submit"
+                                        class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-emerald-600 transition flex items-center justify-center gap-2"
+                                    >
+                                        ✅ Tandai Selesai & Kirim Bukti
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onclick="openModalKendala('{{ $order->id_order }}')"
+                                        class="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 text-sm font-semibold transition flex items-center justify-center gap-2"
+                                    >
+                                        🚨 Minta Batal
+                                    </button>
+                                </div>
 
                             </form>
 
                         @endif
+
+                        {{-- MODAL POPUP LAPORKAN KENDALA --}}
+                        <div id="modalLaporkanKendala-{{ $order->id_order }}" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                            <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100">
+                                <form action="{{ route('order.ajukan-batal', $order->id_order) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <div class="bg-red-600 text-white p-5 flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-2xl">🚨</span>
+                                            <div>
+                                                <h3 class="text-base font-bold">Laporkan Kendala / Minta Batal</h3>
+                                                <p class="text-xs text-red-100">Order #{{ $order->id_order }} - {{ $order->subCategory->nama_sub_kategori ?? 'Layanan' }}</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" onclick="closeModalKendala('{{ $order->id_order }}')" class="text-white hover:text-red-200">✕</button>
+                                    </div>
+
+                                    <div class="p-5 space-y-4 text-xs">
+                                        <div>
+                                            <label class="block font-bold text-slate-800 mb-1">Alasan Utama Kendala / Pembatalan *</label>
+                                            <select name="alasan_batal_teknisi" required class="w-full rounded-xl border border-slate-300 p-2.5 text-slate-800 text-xs focus:ring-red-500 focus:border-red-500">
+                                                <option value="">-- Pilih Alasan Utama --</option>
+                                                <option value="Terlambat >1 Jam / Macet Parah">Terlambat >1 Jam / Terjebak Macet Parah</option>
+                                                <option value="Ban Bocor / Kendaraan Mogok">Ban Bocor / Kendaraan Mogok</option>
+                                                <option value="Sakit Mendadak / Hal Darurat">Sakit Mendadak / Hal Darurat Keluarga</option>
+                                                <option value="Peralatan Perbaikan Rusak/Kurang">Peralatan Perbaikan Rusak / Tidak Lengkap</option>
+                                                <option value="Lainnya">Lainnya</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block font-bold text-slate-800 mb-1">Penjelasan Catatan Kendala *</label>
+                                            <textarea name="catatan_batal_teknisi" rows="3" required placeholder="Jelaskan secara singkat kendala yang dialami agar Admin dapat memverifikasi..." class="w-full rounded-xl border border-slate-300 p-2.5 text-slate-800 text-xs focus:ring-red-500 focus:border-red-500"></textarea>
+                                        </div>
+
+                                        <div>
+                                            <label class="block font-bold text-slate-800 mb-1">Upload Foto Bukti Kendala (Opsional)</label>
+                                            <input type="file" name="foto_kendala" accept="image/*" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 bg-white border border-slate-200 rounded-xl p-1 cursor-pointer">
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                                        <button type="button" onclick="closeModalKendala('{{ $order->id_order }}')" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300">
+                                            Batal
+                                        </button>
+                                        <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-md">
+                                            Kirim Pengajuan ke Admin
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -684,5 +769,111 @@
     </section>
 
 </div>
+
+{{-- ========================================================= --}}
+{{-- MODAL POPUP RINCIAN PENDAPATAN TEKNISI --}}
+{{-- ========================================================= --}}
+<div id="modalRincianPendapatan" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+
+        {{-- MODAL HEADER --}}
+        <div class="bg-slate-900 text-white p-5 flex items-center justify-between" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-9h6a2 2 0 010 4H9a2 2 0 000 4h6" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Rincian Pendapatan Order</h3>
+                    <p class="text-xs text-slate-300 mt-0.5">Total Cair: <span class="text-emerald-400 font-extrabold">Rp {{ number_format($totalPendapatan ?? 0, 0, ',', '.') }}</span></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeModalRincianPendapatan()" class="w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 flex items-center justify-center transition cursor-pointer">
+                ✕
+            </button>
+        </div>
+
+        {{-- MODAL BODY LIST --}}
+        <div class="p-5 max-h-[60vh] overflow-y-auto space-y-3">
+            @forelse($rincianPendapatan as $order)
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-emerald-300 hover:bg-emerald-50/30 transition flex items-center justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-900 text-sm truncate">
+                                {{ $order->subCategory->nama_sub_kategori ?? 'Layanan Perbaikan' }}
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 shrink-0">
+                                #{{ $order->id_order }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Pelanggan: <span class="font-medium text-slate-700">{{ $order->pelanggan->nama ?? '-' }}</span>
+                        </p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">
+                            Selesai: {{ \Carbon\Carbon::parse($order->updated_at ?? $order->created_at)->format('d M Y, H:i') }} WIB
+                        </p>
+                    </div>
+
+                    <div class="text-right shrink-0">
+                        <span class="font-extrabold text-emerald-600 text-base block">
+                            + Rp {{ number_format($order->total_harga, 0, ',', '.') }}
+                        </span>
+                        <a href="{{ route('dashboard.detail-order', $order->id_order) }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-sky-600 hover:text-sky-700 hover:underline mt-1">
+                            Detail Order →
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-8">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-9h6a2 2 0 010 4H9a2 2 0 000 4h6" />
+                        </svg>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700">Belum Ada Pendapatan</p>
+                    <p class="text-xs text-slate-400 mt-1">Order berstatus "Selesai" akan masuk secara otomatis di sini.</p>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- MODAL FOOTER --}}
+        <div class="p-4 bg-slate-50 border-t border-slate-100 text-right">
+            <button type="button" onclick="closeModalRincianPendapatan()" class="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition cursor-pointer">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModalRincianPendapatan() {
+        const modal = document.getElementById('modalRincianPendapatan');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeModalRincianPendapatan() {
+        const modal = document.getElementById('modalRincianPendapatan');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function openModalKendala(idOrder) {
+        const modal = document.getElementById('modalLaporkanKendala-' + idOrder);
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeModalKendala(idOrder) {
+        const modal = document.getElementById('modalLaporkanKendala-' + idOrder);
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+</script>
 
 @endsection

@@ -13,7 +13,6 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div>
             <h1 class="text-2xl font-bold text-slate-900">Kelola Layanan</h1>
-            <p class="text-xs text-slate-500 mt-1">Atur kategori, jenis perbaikan, dan tarif unit layanan</p>
         </div>
 
         <button

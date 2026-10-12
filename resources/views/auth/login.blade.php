@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk — Home Improvement</title>
+    <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -15,8 +15,13 @@
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 py-10">
 
-        <h1 class="text-2xl font-bold text-center text-gray-900">Masuk</h1>
-        <p class="text-sm text-gray-500 text-center mt-1 mb-7">Selamat datang kembali</p>
+        <h1 class="text-2xl font-bold text-center text-gray-900 mb-6">Login</h1>
+
+        @if (session('status'))
+            <div class="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3 mb-5">
+                {{ session('status') }}
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 mb-5">
@@ -54,16 +59,16 @@
             </div>
 
             <div class="text-right">
-                <a href="#" class="text-sm font-semibold text-gray-800 underline">Lupa password?</a>
+                <a href="{{ route('password.request') }}" class="text-sm font-semibold text-gray-800 underline">Lupa password?</a>
             </div>
 
             <button type="submit" class="w-full bg-gray-900 text-white rounded-lg py-3.5 font-semibold hover:bg-gray-800 transition">
-                Masuk
+                Login
             </button>
         </form>
 
         <p class="text-center text-sm text-gray-500 mt-6">
-            Belum punya akun? <a href="{{ route('register') }}" class="text-gray-900 font-semibold underline">Daftar sekarang</a>
+            Belum punya akun? <a href="{{ route('register') }}" class="text-gray-900 font-semibold underline">Registrasi</a>
         </p>
     </div>
 

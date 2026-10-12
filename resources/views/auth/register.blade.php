@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Home Improvement</title>
+    <title>Register</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -85,7 +85,7 @@
         </h1>
 
         <p class="text-sm text-gray-500 text-center mt-1 mb-6">
-            Daftar sebagai
+            Registrasi sebagai
         </p>
 
 
@@ -221,7 +221,7 @@
                         value="{{ old('email') }}"
                         placeholder="Masukkan email"
                         class="w-full
-                               border border-gray-300
+                               border @error('email') border-red-500 bg-red-50/30 @else border-gray-300 @enderror
                                rounded-lg
                                px-3.5 py-3
                                text-sm
@@ -229,6 +229,12 @@
                                focus:border-gray-900
                                transition"
                     >
+
+                    @error('email')
+                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
+                            <span>⚠️</span> {{ $message }}
+                        </p>
+                    @enderror
 
                 </div>
 
@@ -284,6 +290,7 @@
                         id="kategori"
                         name="id_kategori"
                         x-model="selectedKategori"
+                        :disabled="role !== 'teknisi'"
                         class="w-full
                                border border-gray-300
                                rounded-lg
@@ -327,7 +334,8 @@
                         id="subKategori"
                         name="id_sub_kategori"
                         x-model="selectedSubKategori"
-                        required
+                        :required="role === 'teknisi'"
+                        :disabled="role !== 'teknisi'"
                         class="w-full
                                border border-gray-300
                                rounded-lg
@@ -683,6 +691,7 @@
                         name="foto_diri"
                         class="hidden"
                         accept="image/jpeg,image/png"
+                        :disabled="role !== 'teknisi'"
                         @change="
                             fotoDiriName =
                             $event.target.files[0]?.name || ''
@@ -764,6 +773,7 @@
                         name="ktp"
                         class="hidden"
                         accept="image/*"
+                        :disabled="role !== 'teknisi'"
                         @change="
                             ktpName =
                             $event.target.files[0]?.name || ''
@@ -871,7 +881,7 @@
                        hover:bg-gray-800
                        transition"
             >
-                Daftar
+                Registrasi
             </button>
 
         </form>
@@ -889,7 +899,7 @@
                 href="{{ route('login') }}"
                 class="text-gray-900 font-semibold underline"
             >
-                Masuk
+                Login
             </a>
 
         </p>

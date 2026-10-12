@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentController;
 
 
 /*
@@ -61,7 +62,40 @@ Route::middleware('guest')->group(function () {
         '/register',
         [AuthController::class, 'register']
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LUPA PASSWORD / RESET PASSWORD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/forgot-password',
+        [AuthController::class, 'showForgotPassword']
+    )->name('password.request');
+
+    Route::post(
+        '/forgot-password',
+        [AuthController::class, 'resetPassword']
+    )->name('password.update');
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| MIDTRANS NOTIFICATION
+|--------------------------------------------------------------------------
+|
+| Route ini berada DI LUAR middleware auth karena notification
+| dikirim langsung oleh server Midtrans.
+|
+*/
+
+Route::post(
+    '/midtrans/notification',
+    [PaymentController::class, 'notification']
+)->name('midtrans.notification');
 
 
 /*
@@ -132,7 +166,6 @@ Route::middleware('auth')->group(function () {
             )->name('riwayat-order');
 
 
-
             /*
             |--------------------------------------------------------------------------
             | PROFIL
@@ -147,20 +180,40 @@ Route::middleware('auth')->group(function () {
 
             /*
             |--------------------------------------------------------------------------
-            | PEMBAYARAN QRIS
+            | PEMBAYARAN QRIS - MIDTRANS
             |--------------------------------------------------------------------------
             */
 
             Route::get(
                 '/pembayaran-qris/{id}',
-                [DashboardController::class, 'pembayaranQris']
+                [PaymentController::class, 'show']
             )->name('pembayaran-qris');
 
 
             /*
             |--------------------------------------------------------------------------
-            | SIMULASI PEMBAYARAN QRIS
+            | MEMBUAT TRANSAKSI MIDTRANS
             |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/pembayaran-midtrans/{id}',
+                [PaymentController::class, 'create']
+            )->name('pembayaran-midtrans');
+
+            Route::post(
+                '/pembayaran-midtrans/{id}/success',
+                [PaymentController::class, 'success']
+            )->name('pembayaran-midtrans.success');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | SIMULASI PEMBAYARAN QRIS LAMA
+            |--------------------------------------------------------------------------
+            |
+            | Dipertahankan sementara agar fitur lama tidak rusak.
+            |
             */
 
             Route::post(
@@ -176,6 +229,7 @@ Route::middleware('auth')->group(function () {
     | DETAIL ORDER
     |--------------------------------------------------------------------------
     | Dapat diakses oleh pelanggan dan teknisi.
+    |--------------------------------------------------------------------------
     */
 
     Route::get(
@@ -351,6 +405,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:teknisi')
         ->name('order.selesai');
 
+    Route::post(
+        '/dashboard/teknisi/order/{id}/ajukan-batal',
+        [OrderController::class, 'ajukanBatalTeknisi']
+    )
+        ->middleware('role:teknisi')
+        ->name('order.ajukan-batal');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -368,10 +429,6 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     | DASHBOARD ADMIN
     |--------------------------------------------------------------------------
-    |
-    | Admin dibuat oleh sistem/seeder.
-    | Admin tidak melalui halaman register pelanggan/teknisi.
-    |
     */
 
     Route::middleware('role:admin')
@@ -427,27 +484,21 @@ Route::middleware('auth')->group(function () {
                 [AdminController::class, 'orders']
             )->name('orders');
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | ASSIGN TEKNISI KE ORDER
-            |--------------------------------------------------------------------------
-            */
+            Route::post(
+                '/orders/{id}/setujui-batal-reassign',
+                [AdminController::class, 'setujuiBatalDanReassign']
+            )->name('orders.setujui-batal-reassign');
 
             Route::post(
-                '/orders/{id}/assign',
-                [AdminController::class, 'assignTeknisi']
-            )->name('orders.assign');
+                '/orders/{id}/tolak-batal',
+                [AdminController::class, 'tolakPengajuanBatal']
+            )->name('orders.tolak-batal');
 
 
             /*
             |--------------------------------------------------------------------------
             | PENGGUNA
             |--------------------------------------------------------------------------
-            |
-            | Route tetap tersedia.
-            | Tidak harus ditampilkan pada sidebar admin.
-            |
             */
 
             Route::get(
@@ -553,8 +604,15 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/notifikasi/{id}/baca', [NotificationController::class, 'markAsRead'])->name('notifikasi.baca');
-    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifikasi.baca-semua');
+    Route::post(
+        '/notifikasi/{id}/baca',
+        [NotificationController::class, 'markAsRead']
+    )->name('notifikasi.baca');
+
+    Route::post(
+        '/notifikasi/baca-semua',
+        [NotificationController::class, 'markAllAsRead']
+    )->name('notifikasi.baca-semua');
 
 
     /*

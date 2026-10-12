@@ -399,21 +399,12 @@
                         <h2 class="text-lg font-bold text-slate-900">
                             Semua Teknisi
                         </h2>
-
-                        <p class="mt-1 text-sm text-slate-500">
-                            Daftar seluruh teknisi yang telah terdaftar.
-                        </p>
-
                     @else
-
                         <h2 class="text-lg font-bold text-slate-900">
                             Teknisi Menunggu Verifikasi
                         </h2>
-
                     @endif
-
                 </div>
-
 
                 <span
                     class="

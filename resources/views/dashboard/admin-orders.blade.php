@@ -49,6 +49,31 @@
 
     @endif
 
+    @if(session('error'))
+
+        <div
+            class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4"
+        >
+            <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600"
+            >
+                ✕
+            </div>
+
+            <div>
+                <p class="text-sm font-semibold text-red-800">
+                    Perhatian
+                </p>
+
+                <p class="mt-0.5 text-sm text-red-700">
+                    {{ session('error') }}
+                </p>
+            </div>
+
+        </div>
+
+    @endif
+
 
     {{-- ========================================================= --}}
     {{-- ERROR VALIDASI --}}
@@ -82,10 +107,6 @@
 
 
     {{-- ========================================================= --}}
-    {{-- FILTER --}}
-    {{-- ========================================================= --}}
-
-    {{-- ========================================================= --}}
     {{-- RINGKASAN GLOBAL --}}
     {{-- ========================================================= --}}
 
@@ -100,6 +121,11 @@
             ['Dikonfirmasi', 'Dikerjakan', 'Diproses']
         )->count();
 
+        $jumlahPengajuanBatal = \App\Models\Order::where(
+            'status',
+            'Pengajuan_Batal'
+        )->count();
+
         $jumlahSelesai = \App\Models\Order::where(
             'status',
             'Selesai'
@@ -111,24 +137,24 @@
         )->count();
     @endphp
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-5 gap-2 sm:gap-3.5">
 
         {{-- MENUNGGU --}}
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex items-center justify-between">
+        <a href="{{ route('admin.orders', ['status' => 'Menunggu']) }}" class="rounded-3xl border {{ ($status ?? '') === 'Menunggu' ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-200' }} bg-white p-5 shadow-xs flex items-center justify-between hover:border-amber-400 hover:shadow-md transition cursor-pointer group block">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-amber-600 transition">
                     MENUNGGU
                 </p>
 
-                <p class="mt-2 text-3xl font-extrabold text-amber-500">
+                <p class="mt-2 text-2xl font-extrabold text-amber-500">
                     {{ $jumlahMenunggu }}
                 </p>
             </div>
 
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 shrink-0">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 shrink-0 group-hover:scale-105 transition">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
+                    class="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -142,24 +168,24 @@
                     <circle cx="12" cy="12" r="9"/>
                 </svg>
             </div>
-        </div>
+        </a>
 
         {{-- DIPROSES --}}
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex items-center justify-between">
+        <a href="{{ route('admin.orders', ['status' => 'Diproses']) }}" class="rounded-3xl border {{ ($status ?? '') === 'Diproses' ? 'border-blue-400 ring-2 ring-blue-200' : 'border-slate-200' }} bg-white p-5 shadow-xs flex items-center justify-between hover:border-blue-400 hover:shadow-md transition cursor-pointer group block">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-blue-600 transition">
                     DIPROSES
                 </p>
 
-                <p class="mt-2 text-3xl font-extrabold text-blue-600">
+                <p class="mt-2 text-2xl font-extrabold text-blue-600">
                     {{ $jumlahDiproses }}
                 </p>
             </div>
 
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 shrink-0">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-500 shrink-0 group-hover:scale-105 transition">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
+                    class="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -173,24 +199,41 @@
                     <circle cx="12" cy="12" r="9"/>
                 </svg>
             </div>
-        </div>
+        </a>
+
+        {{-- PENGAJUAN BATAL --}}
+        <a href="{{ route('admin.orders', ['status' => 'Pengajuan_Batal']) }}" class="rounded-3xl border {{ ($status ?? '') === 'Pengajuan_Batal' ? 'border-rose-500 ring-2 ring-rose-200 bg-rose-50/50' : 'border-rose-200 bg-white' }} p-5 shadow-xs flex items-center justify-between hover:border-rose-500 hover:shadow-md transition cursor-pointer group block">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-rose-600 group-hover:text-rose-700 transition">
+                    PENGAJUAN BATAL
+                </p>
+
+                <p class="mt-2 text-2xl font-extrabold text-rose-600">
+                    {{ $jumlahPengajuanBatal }}
+                </p>
+            </div>
+
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 shrink-0 group-hover:scale-105 transition text-lg">
+                🚨
+            </div>
+        </a>
 
         {{-- SELESAI --}}
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex items-center justify-between">
+        <a href="{{ route('admin.orders', ['status' => 'Selesai']) }}" class="rounded-3xl border {{ ($status ?? '') === 'Selesai' ? 'border-emerald-400 ring-2 ring-emerald-200' : 'border-slate-200' }} bg-white p-5 shadow-xs flex items-center justify-between hover:border-emerald-400 hover:shadow-md transition cursor-pointer group block">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-emerald-600 transition">
                     SELESAI
                 </p>
 
-                <p class="mt-2 text-3xl font-extrabold text-emerald-600">
+                <p class="mt-2 text-2xl font-extrabold text-emerald-600">
                     {{ $jumlahSelesai }}
                 </p>
             </div>
 
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500 shrink-0">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-500 shrink-0 group-hover:scale-105 transition">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
+                    class="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -203,24 +246,24 @@
                     />
                 </svg>
             </div>
-        </div>
+        </a>
 
         {{-- DIBATALKAN --}}
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs flex items-center justify-between">
+        <a href="{{ route('admin.orders', ['status' => 'Dibatalkan']) }}" class="rounded-3xl border {{ ($status ?? '') === 'Dibatalkan' ? 'border-red-400 ring-2 ring-red-200' : 'border-slate-200' }} bg-white p-5 shadow-xs flex items-center justify-between hover:border-red-400 hover:shadow-md transition cursor-pointer group block">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400 group-hover:text-red-600 transition">
                     DIBATALKAN
                 </p>
 
-                <p class="mt-2 text-3xl font-extrabold text-red-500">
+                <p class="mt-2 text-2xl font-extrabold text-red-500">
                     {{ $jumlahDibatalkan }}
                 </p>
             </div>
 
-            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-500 shrink-0">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-50 text-red-500 shrink-0 group-hover:scale-105 transition">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6"
+                    class="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -233,7 +276,7 @@
                     />
                 </svg>
             </div>
-        </div>
+        </a>
 
     </div>
 
@@ -252,24 +295,20 @@
                     <h2 class="text-lg font-bold text-slate-900">
                         Kelola Transaksi & Order {{ $status ? "({$status})" : '' }}
                     </h2>
-
-                    <p class="mt-0.5 text-xs text-slate-500">
-                        Filter dan kelola penugasan teknisi untuk seluruh transaksi pelanggan.
-                    </p>
                 </div>
 
 
                 <form
                     action="{{ route('admin.orders') }}"
                     method="GET"
-                    class="flex flex-wrap items-center gap-3"
+                    class="flex items-center gap-2.5 shrink-0 flex-nowrap"
                 >
 
                     <select
                         name="status"
                         onchange="this.form.submit()"
                         class="
-                            min-w-[180px]
+                            min-w-[170px]
                             rounded-xl
                             border
                             border-slate-200
@@ -312,6 +351,13 @@
                         </option>
 
                         <option
+                            value="Pengajuan_Batal"
+                            {{ $status === 'Pengajuan_Batal' ? 'selected' : '' }}
+                        >
+                            🚨 Pengajuan Batal (Teknisi)
+                        </option>
+
+                        <option
                             value="Diproses"
                             {{ $status === 'Diproses' ? 'selected' : '' }}
                         >
@@ -343,6 +389,7 @@
                                 inline-flex
                                 items-center
                                 justify-center
+                                whitespace-nowrap
                                 rounded-xl
                                 border
                                 border-slate-200
@@ -389,13 +436,14 @@
                                 'Menunggu' => 'bg-amber-50 text-amber-700 border-amber-200',
                                 'Dikonfirmasi' => 'bg-blue-50 text-blue-700 border-blue-200',
                                 'Dikerjakan', 'Diproses' => 'bg-sky-50 text-sky-700 border-sky-200',
+                                'Pengajuan_Batal' => 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse font-bold',
                                 'Selesai' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                                 'Dibatalkan', 'Ditolak' => 'bg-red-50 text-red-700 border-red-200',
                                 default => 'bg-slate-50 text-slate-600 border-slate-200',
                             };
                         @endphp
 
-                        <tr class="hover:bg-slate-50/80 transition">
+                        <tr class="hover:bg-slate-50/80 transition {{ $order->status === 'Pengajuan_Batal' ? 'bg-rose-50/30' : '' }}">
 
                             {{-- ID & TANGGAL --}}
                             <td class="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">
@@ -424,7 +472,7 @@
                                     <div class="text-[10px] text-emerald-600 font-medium mt-0.5">Terhubung</div>
                                 @else
                                     <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-semibold border border-amber-200">
-                                        Belum Ditugaskan
+                                        Menunggu Teknisi
                                     </span>
                                 @endif
                             </td>
@@ -436,28 +484,28 @@
 
                             {{-- METODE --}}
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase">
-                                    {{ $order->metode_pembayaran ?? '-' }}
+                                <span class="px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[10px] font-bold">
+                                    {{ in_array($order->metode_pembayaran, ['qris', 'online']) ? 'Pembayaran Online' : ucfirst($order->metode_pembayaran ?? '-') }}
                                 </span>
                             </td>
 
                             {{-- STATUS --}}
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-3 py-1 rounded-full text-[11px] font-bold border {{ $statusClass }}">
-                                    {{ $order->status }}
+                                    {{ $order->status === 'Pengajuan_Batal' ? '🚨 Pengajuan Batal' : $order->status }}
                                 </span>
                             </td>
 
                             {{-- AKSI --}}
                             <td class="px-6 py-4 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-2">
-                                    @if(!$order->teknisi && $order->status !== 'Selesai' && $order->status !== 'Dibatalkan')
+                                    @if($order->status === 'Pengajuan_Batal')
                                         <button
                                             type="button"
-                                            onclick="openAssignModal({{ $order->id_order }})"
-                                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold transition shadow-xs"
+                                            onclick="openModalTinjauBatal('{{ $order->id_order }}')"
+                                            class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition"
                                         >
-                                            Tugaskan
+                                            🚨 Tinjau Kendala
                                         </button>
                                     @endif
 
@@ -468,6 +516,78 @@
                                         Detail
                                     </a>
                                 </div>
+
+                                {{-- MODAL POPUP TINJAU PENGAJUAN BATAL TEKNISI --}}
+                                @if($order->status === 'Pengajuan_Batal')
+                                <div id="modalTinjauBatal-{{ $order->id_order }}" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 text-left">
+                                    <div class="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100">
+                                        <div class="bg-rose-600 text-white p-5 flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-2xl">🚨</span>
+                                                <div>
+                                                    <h3 class="text-base font-bold">Verifikasi Kendala Teknisi</h3>
+                                                    <p class="text-xs text-rose-100">Pesanan #{{ $order->id_order }} - {{ $order->subCategory->nama_sub_kategori ?? 'Layanan' }}</p>
+                                                </div>
+                                            </div>
+                                            <button type="button" onclick="closeModalTinjauBatal('{{ $order->id_order }}')" class="text-white hover:text-rose-200">✕</button>
+                                        </div>
+
+                                        <div class="p-5 space-y-4 text-xs whitespace-normal">
+                                            <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                                                <div>
+                                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Teknisi Berhalangan</span>
+                                                    <span class="font-bold text-slate-800 text-sm">{{ $order->teknisi->nama ?? 'Teknisi' }}</span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-[10px] text-slate-400 uppercase font-bold block">Pelanggan Pemesan</span>
+                                                    <span class="font-bold text-slate-800 text-sm">{{ $order->pelanggan->nama ?? 'Pelanggan' }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block font-bold text-slate-800 mb-1">Alasan Utama Kendala:</label>
+                                                <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
+                                                    {{ $order->alasan_batal_teknisi ?? 'Keterlambatan / Kendala teknis' }}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block font-bold text-slate-800 mb-1">Catatan Penjelasan Teknisi:</label>
+                                                <p class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 leading-relaxed italic">
+                                                    "{{ $order->catatan_batal_teknisi ?? '-' }}"
+                                                </p>
+                                            </div>
+
+                                            @if($order->foto_kendala)
+                                                <div>
+                                                    <label class="block font-bold text-slate-800 mb-1">Bukti Foto Kendala:</label>
+                                                    <a href="{{ asset('storage/' . $order->foto_kendala) }}" target="_blank" class="block group">
+                                                        <img src="{{ asset('storage/' . $order->foto_kendala) }}" alt="Foto Kendala" class="w-full h-40 object-cover rounded-xl border border-slate-200 group-hover:opacity-90 transition">
+                                                        <span class="text-[10px] text-sky-600 underline mt-1 block">Klik untuk melihat foto ukuran penuh</span>
+                                                    </a>
+                                                </div>
+                                            @endif
+
+                                            <div class="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                                                <form action="{{ route('admin.orders.setujui-batal-reassign', $order->id_order) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" onclick="return confirm('Apakah Anda yakin menyetujui pembatalan ini? Sistem akan secara otomatis mencari teknisi pengganti terdekat yang aktif.')" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+                                                        👉 Setujui & Biarkan Sistem Cari Teknisi Pengganti
+                                                    </button>
+                                                    <p class="text-[10px] text-slate-400 text-center mt-1">Sistem akan melepaskan pesanan dari teknisi ini & menugaskan teknisi pengganti terdekat.</p>
+                                                </form>
+
+                                                <form action="{{ route('admin.orders.tolak-batal', $order->id_order) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" onclick="return confirm('Tolak pengajuan pembatalan teknisi?')" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition">
+                                                        ✕ Tolak Pengajuan (Minta Teknisi Tetap Datang)
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
                             </td>
 
                         </tr>
@@ -488,296 +608,17 @@
 
     </div>
 
-
-{{-- ============================================================= --}}
-{{-- MODAL TUGASKAN TEKNISI --}}
-{{-- ============================================================= --}}
-
-<div
-    id="assignModal"
-    class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/50 px-5 py-8 backdrop-blur-sm"
->
-
-    <div
-        class="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
-    >
-
-        {{-- HEADER MODAL --}}
-
-        <div class="border-b border-slate-100 px-6 py-5">
-
-            <div class="flex items-start justify-between gap-4">
-
-                <div>
-
-                    <h2 class="text-lg font-bold text-slate-900">
-                        Tugaskan Teknisi
-                    </h2>
-
-                    <p class="mt-1 text-sm text-slate-400">
-                        Pilih teknisi yang sudah terverifikasi.
-                    </p>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    onclick="closeAssignModal()"
-                    class="
-                        flex
-                        h-9
-                        w-9
-                        cursor-pointer
-                        items-center
-                        justify-center
-                        rounded-xl
-                        bg-slate-100
-                        text-slate-500
-                        transition
-                        hover:bg-slate-200
-                    "
-                >
-
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-
-                    </svg>
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-        {{-- FORM --}}
-
-        <form
-            id="assignForm"
-            method="POST"
-            action=""
-            class="px-6 py-6"
-        >
-
-            @csrf
-
-            <div>
-
-                <label
-                    for="id_teknisi"
-                    class="mb-2 block text-sm font-semibold text-slate-700"
-                >
-                    Teknisi
-                </label>
-
-                <select
-                    name="id_teknisi"
-                    id="id_teknisi"
-                    required
-                    class="
-                        w-full
-                        rounded-xl
-                        border
-                        border-slate-200
-                        bg-white
-                        px-4
-                        py-3
-                        text-sm
-                        text-slate-700
-                        outline-none
-                        transition
-                        focus:border-slate-400
-                        focus:ring-2
-                        focus:ring-slate-100
-                    "
-                >
-
-                    <option value="">
-                        -- Pilih Teknisi --
-                    </option>
-
-                    @forelse($teknisiAktif as $teknisi)
-
-                        <option value="{{ $teknisi->id_user }}">
-
-                            {{ $teknisi->nama }}
-
-                            @if($teknisi->profileTeknisi?->subCategory)
-                                —
-                                {{ $teknisi->profileTeknisi->subCategory->nama_sub_kategori }}
-                            @endif
-
-                        </option>
-
-                    @empty
-
-                        <option value="" disabled>
-                            Belum ada teknisi terverifikasi
-                        </option>
-
-                    @endforelse
-
-                </select>
-
-                <p class="mt-2 text-xs text-slate-400">
-                    Hanya teknisi dengan status verifikasi
-                    <span class="font-semibold text-emerald-600">
-                        Disetujui
-                    </span>
-                    yang tersedia.
-                </p>
-
-            </div>
-
-
-            {{-- BUTTON --}}
-
-            <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
-                <button
-                    type="button"
-                    onclick="closeAssignModal()"
-                    class="
-                        cursor-pointer
-                        rounded-xl
-                        border
-                        border-slate-200
-                        px-5
-                        py-3
-                        text-sm
-                        font-semibold
-                        text-slate-600
-                        transition
-                        hover:bg-slate-50
-                    "
-                >
-                    Batal
-                </button>
-
-
-                <button
-                    type="submit"
-                    class="
-                        cursor-pointer
-                        rounded-xl
-                        bg-slate-900
-                        px-5
-                        py-3
-                        text-sm
-                        font-semibold
-                        text-white
-                        transition
-                        hover:bg-slate-800
-                    "
-                >
-                    Tugaskan Teknisi
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
 </div>
 
-
-{{-- ============================================================= --}}
-{{-- JAVASCRIPT MODAL --}}
-{{-- ============================================================= --}}
-
 <script>
-
-    function openAssignModal(orderId)
-    {
-        const modal = document.getElementById('assignModal');
-        const form = document.getElementById('assignForm');
-
-        if (!modal || !form) {
-            return;
-        }
-
-        /*
-         * Route Laravel:
-         * POST /dashboard/admin/orders/{id}/assign
-         */
-        form.action =
-            "{{ url('/dashboard/admin/orders') }}/"
-            + orderId
-            + "/assign";
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-
-        document.body.classList.add('overflow-hidden');
+    function openModalTinjauBatal(id) {
+        const modal = document.getElementById('modalTinjauBatal-' + id);
+        if (modal) modal.classList.remove('hidden');
     }
-
-
-    function closeAssignModal()
-    {
-        const modal = document.getElementById('assignModal');
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-
-        document.body.classList.remove('overflow-hidden');
-
-        const select = document.getElementById('id_teknisi');
-
-        if (select) {
-            select.value = '';
-        }
+    function closeModalTinjauBatal(id) {
+        const modal = document.getElementById('modalTinjauBatal-' + id);
+        if (modal) modal.classList.add('hidden');
     }
-
-
-    /*
-     * Klik area luar modal
-     */
-
-    document
-        .getElementById('assignModal')
-        ?.addEventListener(
-            'click',
-            function(event)
-            {
-                if (event.target === this) {
-                    closeAssignModal();
-                }
-            }
-        );
-
-
-    /*
-     * Tombol ESC
-     */
-
-    document.addEventListener(
-        'keydown',
-        function(event)
-        {
-            if (event.key === 'Escape') {
-                closeAssignModal();
-            }
-        }
-    );
-
 </script>
 
 @endsection

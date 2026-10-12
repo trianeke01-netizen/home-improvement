@@ -323,29 +323,6 @@
                     </div>
 
 
-                    {{-- METODE PEMBAYARAN --}}
-
-                    <div
-                        class="flex
-                               items-center
-                               justify-between
-                               py-4
-                               border-b
-                               border-slate-100">
-
-                        <span class="text-sm text-slate-500">
-                            Metode Pembayaran
-                        </span>
-
-                        <span
-                            class="font-semibold
-                                   text-slate-800">
-
-                            QRIS
-
-                        </span>
-
-                    </div>
 
 
                     {{-- TOTAL --}}

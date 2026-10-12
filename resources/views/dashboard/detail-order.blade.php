@@ -13,7 +13,7 @@
     <div>
 
         <a
-            href="{{ route('dashboard.riwayat-order') }}"
+            href="{{ auth()->user()->role_user === 'admin' ? route('admin.orders') : (auth()->user()->role_user === 'teknisi' ? route('dashboard.teknisi') : route('dashboard.riwayat-order')) }}"
             class="inline-flex items-center gap-2
                    text-slate-500
                    hover:text-sky-600
@@ -139,6 +139,22 @@
 
                     </span>
 
+                @elseif($order->status == 'Pengajuan_Batal')
+
+                    <span
+                        class="px-4 py-2
+                               rounded-full
+                               bg-rose-100
+                               text-rose-800
+                               text-sm
+                               font-bold
+                               animate-pulse
+                               whitespace-nowrap">
+
+                        🚨 Teknisi Mengajukan Kendala
+
+                    </span>
+
                 @elseif($order->status == 'Selesai')
 
                     <span
@@ -174,6 +190,21 @@
             </div>
 
         </div>
+
+        @if($order->status == 'Pengajuan_Batal')
+            <div class="m-6 p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-4">
+                <span class="text-3xl shrink-0">🚨</span>
+                <div class="space-y-1 text-xs sm:text-sm">
+                    <h4 class="font-bold text-rose-900 text-base">Teknisi Mengajukan Kendala Kedatangan</h4>
+                    <p class="leading-relaxed">
+                        Teknisi {{ $order->teknisi->nama ?? '' }} melaporkan kendala: <strong class="text-rose-950 font-bold">"{{ $order->alasan_batal_teknisi ?? 'Berhalangan hadir' }}"</strong>.
+                    </p>
+                    <p class="text-rose-700 leading-relaxed font-semibold mt-1">
+                        🔍 Admin saat ini sedang memverifikasi laporan ini. Setelah disetujui, sistem akan <strong>secara otomatis mengalihkan pesanan Anda ke teknisi pengganti terdekat</strong>.
+                    </p>
+                </div>
+            </div>
+        @endif
 
 
         {{-- ================================================= --}}
@@ -503,14 +534,44 @@
                 {{-- METODE PEMBAYARAN --}}
                 <div>
                     <p class="text-xs text-slate-400 font-medium">Metode Pembayaran</p>
-                    <div class="mt-1">
-                        @if($order->metode_pembayaran === 'qris')
-                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-sky-100 text-sky-700 text-xs font-bold">
-                                QRIS
+                    <div class="mt-1 flex items-center gap-2">
+                        @if(in_array($order->metode_pembayaran, ['qris', 'online']))
+                            @php
+                                $payMethod = $order->payment->payment_method ?? 'Pembayaran Online';
+                                $payStatus = $order->payment->transaction_status ?? 'pending';
+                                $isPaid = in_array($payStatus, ['settlement', 'capture']);
+                            @endphp
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full {{ $isPaid ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-sky-100 text-sky-800 border border-sky-200' }} text-xs font-bold shadow-2xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                    <path stroke-linecap="round" d="M3 10h18"/>
+                                </svg>
+                                {{ (in_array(strtolower($payMethod), ['qris', 'online']) && !$isPaid) ? 'Pembayaran Online (Midtrans)' : $payMethod . ' (Midtrans)' }}
+                                @if($isPaid)
+                                    <span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-extrabold ml-1">LUNAS</span>
+                                @endif
                             </span>
+
+                            @if(auth()->user()->role_user === 'pelanggan' && !$isPaid && !in_array($order->status, ['Dibatalkan', 'Ditolak', 'Selesai']))
+                                <div class="mt-2.5">
+                                    <a
+                                        href="{{ route('dashboard.pembayaran-midtrans', $order->id_order) }}"
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm animate-pulse"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                            <path stroke-linecap="round" d="M3 10h18"/>
+                                        </svg>
+                                        💳 Lanjutkan Pembayaran
+                                    </a>
+                                </div>
+                            @endif
                         @elseif($order->metode_pembayaran === 'tunai')
-                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
-                                Tunai
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-9h6a2 2 0 010 4H9a2 2 0 000 4h6" />
+                                </svg>
+                                Tunai (Bayar Langsung ke Teknisi)
                             </span>
                         @else
                             <span class="text-xs text-slate-500">Belum dipilih</span>
@@ -751,7 +812,17 @@
                                         {{ $order->teknisi->nama }}
                                     </h4>
 
-                                    <p class="text-xs text-slate-500 mt-0.5">
+                                    @php
+                                        $avgRating = $order->teknisi->average_rating;
+                                    @endphp
+
+                                    <div class="mt-1 flex items-center gap-1.5 text-xs">
+                                        <span class="inline-flex items-center gap-1 font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                                            ★ {{ $avgRating > 0 ? number_format($avgRating, 1) . ' / 5' : 'Belum Ada Rating' }}
+                                        </span>
+                                    </div>
+
+                                    <p class="text-xs text-slate-500 mt-1.5">
                                         Spesialisasi: <span class="font-semibold text-slate-700">{{ $order->subCategory->nama_sub_kategori ?? 'Teknisi Handal' }}</span>
                                     </p>
 
@@ -783,7 +854,11 @@
                         @else
 
                             <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs text-center">
-                                Belum ada teknisi yang menerima pesanan ini.
+                                @if(!empty($order->excluded_teknisi_ids))
+                                    🚨 <strong class="font-bold">Sedang Mencari Teknisi Pengganti:</strong> Teknisi sebelumnya tidak merespons dalam 1 jam, pesanan Anda otomatis dialihkan kembali ke sistem untuk mendapatkan teknisi pengganti.
+                                @else
+                                    Belum ada teknisi yang menerima pesanan ini.
+                                @endif
                             </div>
 
                         @endif

@@ -493,7 +493,7 @@
                                  BATALKAN PESANAN
                                  HANYA SAAT MENUNGGU
                                  ================================================= --}}
-                            @if($order->status === 'Menunggu')
+                            @if(in_array($order->status, ['Menunggu', 'Dikonfirmasi']))
 
                                 <form
                                     action="{{ route('order.batalkan', $order->id_order) }}"
@@ -552,6 +552,63 @@
 
                             @endif
 
+
+                            {{-- LANJUTKAN PEMBAYARAN MIDTRANS --}}
+                            @php
+                                $isPaid = $order->payment && in_array($order->payment->transaction_status, ['settlement', 'capture']);
+                                $isUnpaidOnline = in_array($order->metode_pembayaran, ['qris', 'online']) && !$isPaid && !in_array($order->status, ['Dibatalkan', 'Ditolak', 'Selesai']);
+                            @endphp
+
+                            @if($isUnpaidOnline)
+                                <a
+                                    href="{{ route('dashboard.pembayaran-midtrans', $order->id_order) }}"
+                                    class="
+                                        w-full
+                                        sm:w-auto
+                                        inline-flex
+                                        items-center
+                                        justify-center
+                                        gap-2
+                                        rounded-xl
+                                        bg-emerald-600
+                                        hover:bg-emerald-700
+                                        px-5
+                                        py-2.5
+                                        text-xs
+                                        font-bold
+                                        text-white
+                                        transition
+                                        shadow-sm
+                                        animate-pulse
+                                    "
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="5" width="18" height="14" rx="2"/>
+                                        <path stroke-linecap="round" d="M3 10h18"/>
+                                    </svg>
+                                    Lanjutkan Pembayaran
+                                </a>
+                            @endif
+
+
+                            {{-- BERI NILAI / SUDAH DINILAI --}}
+                            @if($order->status === 'Selesai')
+                                @if($order->review)
+                                    <span class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                        </svg>
+                                        Sudah Dinilai
+                                    </span>
+                                @else
+                                    <a
+                                        href="{{ route('dashboard.detail-order', $order->id_order) }}"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm"
+                                    >
+                                        ⭐ Beri Nilai
+                                    </a>
+                                @endif
+                            @endif
 
                             {{-- LIHAT DETAIL --}}
                             <a

@@ -112,4 +112,15 @@ class User extends Authenticatable
 
         return round((float) ($avg ?? 0.0), 1);
     }
+
+    public function getReviewCountAttribute(): int
+    {
+        if (!$this->isTeknisi()) {
+            return 0;
+        }
+
+        return Review::whereHas('order', function ($query) {
+            $query->where('id_teknisi', $this->id_user);
+        })->count();
+    }
 }
